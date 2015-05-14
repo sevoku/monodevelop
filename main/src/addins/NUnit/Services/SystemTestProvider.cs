@@ -33,7 +33,7 @@ namespace MonoDevelop.NUnit
 {
 	public class SystemTestProvider: ITestProvider
 	{
-		public UnitTest CreateUnitTest (IWorkspaceObject entry)
+		public UnitTest CreateUnitTest (WorkspaceObject entry)
 		{
 			UnitTest test = null;
 			
@@ -53,14 +53,6 @@ namespace MonoDevelop.NUnit
 				return null;
 			
 			return test;
-		}
-		
-		public Type[] GetOptionTypes ()
-		{
-			return new Type[] {
-				typeof(GeneralTestOptions),
-				typeof(NUnitCategoryOptions)
-			};
 		}
 	}
 }

@@ -617,7 +617,7 @@ namespace MonoDevelop.Ide
 				AlertButtonClicked (this, args);
 			return args.CloseDialog;
 		}
-		
+
 		public void AddOption (string id, string text, bool setByDefault)
 		{
 			Options.Add (new AlertOption (id, text) { Value = setByDefault });

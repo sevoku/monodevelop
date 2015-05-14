@@ -91,18 +91,21 @@ namespace MonoDevelop.Ide.CodeCompletion
 			HBox hb = new HBox (false, 0);
 			hb.PackStart (vb, true, true, 0);
 			
-			
 			vb2.Spacing = 4;
 			vb2.PackStart (hb, true, true, 0);
 			ContentBox.Add (vb2);
-			var scheme = SyntaxModeService.GetColorStyle (IdeApp.Preferences.ColorScheme);
-			Theme.SetSchemeColors (scheme);
-
-			foreColor = scheme.PlainText.Foreground;
-			headlabel.ModifyFg (StateType.Normal, foreColor.ToGdkColor ());
 			ShowAll ();
 			DesktopService.RemoveWindowShadow (this);
+		}
 
+		protected override void OnShown ()
+		{
+			var scheme = SyntaxModeService.GetColorStyle (IdeApp.Preferences.ColorScheme);
+			Theme.SetSchemeColors (scheme);
+			foreColor = scheme.PlainText.Foreground;
+			headlabel.ModifyFg (StateType.Normal, foreColor.ToGdkColor ());
+
+			base.OnShown ();
 		}
 
 		int lastParam = -2;
@@ -137,11 +140,11 @@ namespace MonoDevelop.Ide.CodeCompletion
 				headlabel.WidthRequest = headlabel.RealWidth + 70;
 			
 			foreach (var cat in currentTooltipInformation.Categories) {
-				descriptionBox.PackStart (CreateCategory (cat.Item1, cat.Item2), true, true, 4);
+				descriptionBox.PackStart (CreateCategory (TooltipInformationWindow.GetHeaderMarkup (cat.Item1), cat.Item2), true, true, 4);
 			}
 			
 			if (!string.IsNullOrEmpty (currentTooltipInformation.SummaryMarkup)) {
-				descriptionBox.PackStart (CreateCategory (GettextCatalog.GetString ("Summary"), currentTooltipInformation.SummaryMarkup), true, true, 4);
+				descriptionBox.PackStart (CreateCategory (TooltipInformationWindow.GetHeaderMarkup (GettextCatalog.GetString ("Summary")), currentTooltipInformation.SummaryMarkup), true, true, 4);
 			}
 			descriptionBox.ShowAll ();
 			QueueResize ();
@@ -158,29 +161,7 @@ namespace MonoDevelop.Ide.CodeCompletion
 
 		VBox CreateCategory (string categoryName, string categoryContentMarkup)
 		{
-			var vbox = new VBox ();
-			
-			vbox.Spacing = 2;
-			
-			var catLabel = new MonoDevelop.Components.FixedWidthWrapLabel ();
-			catLabel.Text = categoryName;
-			catLabel.ModifyFg (StateType.Normal, foreColor.ToGdkColor ());
-			catLabel.FontDescription = FontService.GetFontDescription ("Editor");
-			
-			vbox.PackStart (catLabel, false, true, 0);
-			
-			var contentLabel = new MonoDevelop.Components.FixedWidthWrapLabel ();
-			contentLabel.MaxWidth = Math.Max (440, this.Allocation.Width);
-			contentLabel.Wrap = Pango.WrapMode.WordChar;
-			contentLabel.BreakOnCamelCasing = true;
-			contentLabel.BreakOnPunctuation = true;
-			contentLabel.Markup = categoryContentMarkup.Trim ();
-			contentLabel.ModifyFg (StateType.Normal, foreColor.ToGdkColor ());
-			contentLabel.FontDescription = FontService.GetFontDescription ("Editor");
-			
-			vbox.PackStart (contentLabel, true, true, 0);
-			
-			return vbox;
+			return TooltipInformationWindow.CreateCategory (categoryName, categoryContentMarkup, foreColor);
 		}
 
 		public void ChangeOverload ()

@@ -38,6 +38,8 @@ using Microsoft.CodeAnalysis;
 using MonoDevelop.Projects;
 using MonoDevelop.Core.ProgressMonitoring;
 using MonoDevelop.Ide.TypeSystem;
+using MonoDevelop.Core;
+using MonoDevelop.Ide;
 
 namespace MonoDevelop.CSharpBinding
 {
@@ -174,7 +176,7 @@ namespace MonoDevelop.CSharpBinding
 			content.Text = text;
 			content.CursorPosition = System.Math.Max (0, endPos);
 
-			var project = new DotNetAssemblyProject (Microsoft.CodeAnalysis.LanguageNames.CSharp);
+			var project = MonoDevelop.Projects.Services.ProjectService.CreateProject ("C#");
 			project.Name = "test";
 			project.FileName = "test.csproj";
 			project.Files.Add (new ProjectFile (content.ContentName, BuildAction.Compile)); 
@@ -182,7 +184,7 @@ namespace MonoDevelop.CSharpBinding
 			var solution = new MonoDevelop.Projects.Solution ();
 			solution.AddConfiguration ("", true); 
 			solution.DefaultSolutionFolder.AddItem (project);
-			using (var monitor = new NullProgressMonitor ())
+			using (var monitor = new ProgressMonitor ())
 				TypeSystemService.Load (solution, monitor, false);
 			content.Project = project;
 			doc.SetProject (project);
@@ -221,7 +223,7 @@ namespace MonoDevelop.CSharpBinding
 		[Test]
 		public void TestSimpleCase ()
 		{
-			CompletionTextEditorExtension.AddParenthesesAfterCompletion.Set (true); 
+			IdeApp.Preferences.AddParenthesesAfterCompletion.Set (true); 
 			string completion = Test (@"class MyClass
 {
 	int foo;
@@ -237,7 +239,7 @@ namespace MonoDevelop.CSharpBinding
 		[Test]
 		public void TestNoAutoCase ()
 		{
-			CompletionTextEditorExtension.AddParenthesesAfterCompletion.Set (false); 
+			IdeApp.Preferences.AddParenthesesAfterCompletion.Set (false); 
 			string completion = Test (@"class MyClass
 {
 	int foo;

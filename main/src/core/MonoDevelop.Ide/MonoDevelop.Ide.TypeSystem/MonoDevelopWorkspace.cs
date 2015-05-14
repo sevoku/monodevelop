@@ -38,7 +38,6 @@ using Microsoft.CodeAnalysis.Host;
 using MonoDevelop.Core.Text;
 using System.Collections.Concurrent;
 using MonoDevelop.Ide.CodeFormatting;
-using MonoDevelop.Core.ProgressMonitoring;
 using Gtk;
 using MonoDevelop.Ide.Editor.Projection;
 
@@ -331,9 +330,9 @@ namespace MonoDevelop.Ide.TypeSystem
 			var projectId = GetOrCreateProjectId (p);
 			var projectData = GetOrCreateProjectData (projectId); 
 			var config = IdeApp.Workspace != null ? p.GetConfiguration (IdeApp.Workspace.ActiveConfiguration) as MonoDevelop.Projects.DotNetProjectConfiguration : null;
-			MonoDevelop.Projects.DotNetConfigurationParameters cp = null;
+			MonoDevelop.Projects.DotNetCompilerParameters cp = null;
 			if (config != null)
-				cp = config.CompilationParameters as MonoDevelop.Projects.DotNetConfigurationParameters;
+				cp = config.CompilationParameters;
 			FilePath fileName = IdeApp.Workspace != null ? p.GetOutputFileName (IdeApp.Workspace.ActiveConfiguration) : (FilePath)"";
 			if (fileName.IsNullOrEmpty)
 				fileName = new FilePath (p.Name + ".dll");
@@ -466,6 +465,8 @@ namespace MonoDevelop.Ide.TypeSystem
 				if (hashSet.Contains (fileName))
 					continue;
 				hashSet.Add (fileName);
+				if (!File.Exists (fileName))
+					continue;
 				yield return MetadataReferenceCache.LoadReference (projectId, fileName);
 				addFacadeAssemblies |= MonoDevelop.Core.Assemblies.SystemAssemblyService.ContainsReferenceToSystemRuntime (fileName);
 			}
@@ -475,8 +476,11 @@ namespace MonoDevelop.Ide.TypeSystem
 				if (netProject != null) {
 					var runtime = netProject.TargetRuntime ?? MonoDevelop.Core.Runtime.SystemAssemblyService.DefaultRuntime;
 					var facades = runtime.FindFacadeAssembliesForPCL (netProject.TargetFramework);
-					foreach (var facade in facades)
+					foreach (var facade in facades) {
+						if (!File.Exists (facade))
+							continue;
 						yield return MetadataReferenceCache.LoadReference (projectId, facade);
+					}
 				}
 			}
 
@@ -488,6 +492,8 @@ namespace MonoDevelop.Ide.TypeSystem
 					continue;
 				if (TypeSystemService.IsOutputTrackedProject (referencedProject)) {
 					var fileName = referencedProject.GetOutputFileName (configurationSelector);
+					if (!File.Exists (fileName))
+						continue;
 					yield return MetadataReferenceCache.LoadReference (projectId, fileName);
 				}
 			}
@@ -564,7 +570,7 @@ namespace MonoDevelop.Ide.TypeSystem
 				var data = GetMonoProject (projectChanges.NewProject);
 				if (data != null) {
 					Application.Invoke (delegate {
-						data.Save (new NullProgressMonitor ());	
+						data.SaveAsync (new ProgressMonitor ());	
 					});
 				}
 			} finally {
@@ -722,7 +728,7 @@ namespace MonoDevelop.Ide.TypeSystem
 				var file = new MonoDevelop.Projects.ProjectFile (path);
 				Application.Invoke (delegate {
 					mdProject.Files.Add (file);
-					IdeApp.ProjectOperations.Save (mdProject);
+					IdeApp.ProjectOperations.SaveAsync (mdProject);
 				});
 			}
 
@@ -889,7 +895,8 @@ namespace MonoDevelop.Ide.TypeSystem
 				return;
 			var project = (MonoDevelop.Projects.Project)sender;
 			var projectId = GetProjectId (project);
-			OnProjectReloaded (LoadProject (project, default(CancellationToken))); 
+			if (CurrentSolution.ContainsProject (projectId))
+				OnProjectReloaded (LoadProject (project, default(CancellationToken))); 
 		}
 
 		#endregion

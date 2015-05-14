@@ -88,7 +88,7 @@ namespace SubversionAddinWindows
 			get { return SvnSharpClient.client.Value; }
 		}
 
-		IProgressMonitor updateMonitor;
+		ProgressMonitor updateMonitor;
 		NotifData notifyData;
 		ProgressData progressData;
 
@@ -145,7 +145,7 @@ namespace SubversionAddinWindows
 				if (updateMonitor == null)
 					return;
 
-				a.Cancel = updateMonitor.IsCancelRequested;
+				a.Cancel = updateMonitor.CancellationToken.IsCancellationRequested;
 			};
 		}
 
@@ -207,7 +207,7 @@ namespace SubversionAddinWindows
 			e.CertificateFile = file;
 		}
 
-		public override void Add (FilePath path, bool recurse, IProgressMonitor monitor)
+		public override void Add (FilePath path, bool recurse, ProgressMonitor monitor)
 		{
 			var args = new SvnAddArgs {
 				Depth = recurse ? SvnDepth.Infinity : SvnDepth.Empty,
@@ -217,7 +217,7 @@ namespace SubversionAddinWindows
 				client.Add (path, args);
 		}
 
-		public override void Checkout (string url, FilePath path, Revision rev, bool recurse, IProgressMonitor monitor)
+		public override void Checkout (string url, FilePath path, Revision rev, bool recurse, ProgressMonitor monitor)
 		{
 			var args = new SvnCheckOutArgs {
 				Depth = recurse ? SvnDepth.Infinity : SvnDepth.Empty,
@@ -233,7 +233,7 @@ namespace SubversionAddinWindows
 			}
 		}
 
-		public override void Commit (FilePath[] paths, string message, IProgressMonitor monitor)
+		public override void Commit (FilePath[] paths, string message, ProgressMonitor monitor)
 		{
 			var args = new SvnCommitArgs {
 				LogMessage = message,
@@ -243,7 +243,7 @@ namespace SubversionAddinWindows
 				client.Commit (paths.ToStringArray (), args);
 		}
 
-		public override void Delete (FilePath path, bool force, IProgressMonitor monitor)
+		public override void Delete (FilePath path, bool force, ProgressMonitor monitor)
 		{
 			var args = new SvnDeleteArgs {
 				Force = force,
@@ -348,7 +348,7 @@ namespace SubversionAddinWindows
 			return RevisionAction.Other;
 		}
 
-		public override void Mkdir (string[] paths, string message, IProgressMonitor monitor)
+		public override void Mkdir (string[] paths, string message, ProgressMonitor monitor)
 		{
 			var args = new SvnCreateDirectoryArgs {
 				CreateParents = true,
@@ -360,7 +360,7 @@ namespace SubversionAddinWindows
 				client.RemoteCreateDirectories (uris, args);
 		}
 
-		public override void Move (FilePath srcPath, FilePath destPath, SvnRevision rev, bool force, IProgressMonitor monitor)
+		public override void Move (FilePath srcPath, FilePath destPath, SvnRevision rev, bool force, ProgressMonitor monitor)
 		{
 			var args = new SvnMoveArgs {
 				Force = force,
@@ -387,7 +387,7 @@ namespace SubversionAddinWindows
 			}
 		}
 
-		public override void Revert (FilePath[] paths, bool recurse, IProgressMonitor monitor)
+		public override void Revert (FilePath[] paths, bool recurse, ProgressMonitor monitor)
 		{
 			var args = new SvnRevertArgs {
 				Depth = recurse ? SvnDepth.Infinity : SvnDepth.Children,
@@ -397,7 +397,7 @@ namespace SubversionAddinWindows
 				client.Revert (paths.ToStringArray (), args);
 		}
 
-		public override void RevertRevision (FilePath path, Revision revision, IProgressMonitor monitor)
+		public override void RevertRevision (FilePath path, Revision revision, ProgressMonitor monitor)
 		{
 			var args = new SvnMergeArgs ();
 			BindMonitor (monitor);
@@ -407,7 +407,7 @@ namespace SubversionAddinWindows
 				client.Merge (path, new SvnPathTarget (path), range, args);
 		}
 
-		public override void RevertToRevision (FilePath path, Revision revision, IProgressMonitor monitor)
+		public override void RevertToRevision (FilePath path, Revision revision, ProgressMonitor monitor)
 		{
 			var args = new SvnMergeArgs ();
 			BindMonitor (monitor);
@@ -505,7 +505,7 @@ namespace SubversionAddinWindows
 			return VersionStatus.Unversioned;
 		}
 
-		public override void Lock (IProgressMonitor monitor, string comment, bool stealLock, params FilePath[] paths)
+		public override void Lock (ProgressMonitor monitor, string comment, bool stealLock, params FilePath[] paths)
 		{
 			var args = new SvnLockArgs {
 				Comment = comment,
@@ -516,7 +516,7 @@ namespace SubversionAddinWindows
 				client.Lock (paths.ToStringArray (), args);
 		}
 
-		public override void Unlock (IProgressMonitor monitor, bool breakLock, params FilePath[] paths)
+		public override void Unlock (ProgressMonitor monitor, bool breakLock, params FilePath[] paths)
 		{
 			var args = new SvnUnlockArgs {
 				BreakLock = breakLock,
@@ -526,7 +526,7 @@ namespace SubversionAddinWindows
 				client.Unlock (paths.ToStringArray (), args);
 		}
 
-		public override void Update (FilePath path, bool recurse, IProgressMonitor monitor)
+		public override void Update (FilePath path, bool recurse, ProgressMonitor monitor)
 		{
 			var args = new SvnUpdateArgs {
 				Depth = recurse ? SvnDepth.Infinity : SvnDepth.Children,
@@ -652,7 +652,7 @@ namespace SubversionAddinWindows
 			public int Seconds;
 		}
 
-		void BindMonitor (IProgressMonitor monitor)
+		void BindMonitor (ProgressMonitor monitor)
 		{
 			notifyData = new NotifData ();
 			progressData = new ProgressData ();
@@ -667,7 +667,7 @@ namespace SubversionAddinWindows
 			return String.Format ("{0:0.00} MBytes", kbytes / 1024.0);
 		}
 
-		static void ProgressWork (SvnProgressEventArgs e, ProgressData data, IProgressMonitor monitor)
+		static void ProgressWork (SvnProgressEventArgs e, ProgressData data, ProgressMonitor monitor)
 		{
 			if (monitor == null)
 				return;
@@ -704,7 +704,7 @@ namespace SubversionAddinWindows
 			data.LogTimer.Start ();
 		}
 
-		static void Notify (SvnNotifyEventArgs e, NotifData notifData, IProgressMonitor monitor)
+		static void Notify (SvnNotifyEventArgs e, NotifData notifData, ProgressMonitor monitor)
 		{
 			string actiondesc;
 			string file = e.Path;

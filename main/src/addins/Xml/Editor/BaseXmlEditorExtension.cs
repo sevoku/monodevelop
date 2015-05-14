@@ -115,7 +115,7 @@ namespace MonoDevelop.Xml.Editor
 				ownerProjects = new List<DotNetProject> ();
 				return;
 			}
-			var projects = new HashSet<DotNetProject> (IdeApp.Workspace.GetAllSolutionItems<DotNetProject> ().Where (p => p.IsFileInProject (DocumentContext.Name)));
+			var projects = new HashSet<DotNetProject> (IdeApp.Workspace.GetAllItems<DotNetProject> ().Where (p => p.IsFileInProject (DocumentContext.Name)));
 			if (ownerProjects == null || !projects.SetEquals (ownerProjects)) {
 				ownerProjects = projects.OrderBy (p => p.Name).ToList ();
 				var dnp = DocumentContext.Project as DotNetProject;

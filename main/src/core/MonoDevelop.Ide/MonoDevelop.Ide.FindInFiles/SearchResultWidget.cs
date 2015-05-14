@@ -40,6 +40,7 @@ using MonoDevelop.Ide.Gui.Content;
 using MonoDevelop.Ide.Navigation;
 using MonoDevelop.Ide.Gui.Components;
 using MonoDevelop.Components;
+using System.Threading;
 using MonoDevelop.Ide.Editor;
 using MonoDevelop.Core.Text;
 using MonoDevelop.Ide.Editor.Highlighting;
@@ -66,6 +67,11 @@ namespace MonoDevelop.Ide.FindInFiles
 		TextView textviewLog;
 		TreeViewColumn pathColumn;
 
+		public CancellationTokenSource CancellationTokenSource {
+			get;
+			set;
+		}
+
 		private PathMode pathMode;
 		internal PathMode PathMode {
 			set {
@@ -75,11 +81,6 @@ namespace MonoDevelop.Ide.FindInFiles
 			}
 		}
 
-		public IAsyncOperation AsyncOperation {
-			get;
-			set;
-		}
-		
 		public bool AllowReuse {
 			get { 
 				return !buttonStop.Sensitive && !buttonPin.Active; 
@@ -237,8 +238,8 @@ namespace MonoDevelop.Ide.FindInFiles
 
 		void ButtonStopClicked (object sender, EventArgs e)
 		{
-			if (AsyncOperation != null)
-				AsyncOperation.Cancel ();
+			if (CancellationTokenSource != null)
+				CancellationTokenSource.Cancel ();
 		}
 
 		void TreeviewSearchResultsRowActivated(object o, RowActivatedArgs args)
@@ -475,7 +476,7 @@ namespace MonoDevelop.Ide.FindInFiles
 				if (pathMode == PathMode.Relative) {
 					var workspace = IdeApp.Workspace;
 					var solutions = workspace != null ? workspace.GetAllSolutions () : null;
-					baseSolutionPath = solutions != null && solutions.Count == 1 ? solutions [0].BaseDirectory : null;
+					baseSolutionPath = solutions != null && solutions.Count () == 1 ? solutions.First ().BaseDirectory : null;
 				}
 				var finalFileName = baseSolutionPath == null ? fileName :
 					FileService.AbsoluteToRelativePath (baseSolutionPath, fileName);

@@ -100,8 +100,15 @@ namespace MonoDevelop.Ide.CodeCompletion
 			this.AutoSelect = true;
 			this.TypeHint = WindowTypeHint.Menu;
 			Theme.CornerRadius = 4;
+		}
+
+		protected override void OnShown ()
+		{
 			var style = SyntaxModeService.GetColorStyle (IdeApp.Preferences.ColorScheme);
-			Theme.SetFlatColor (style.CompletionText.Background);
+			Theme.SetFlatColor (style.CompletionWindow.Color);
+			if (style.CompletionWindow.HasBorderColor)
+				Theme.BorderColor = style.CompletionWindow.BorderColor;
+			base.OnShown ();
 		}
 
 		protected virtual void DoubleClick ()
@@ -361,7 +368,7 @@ namespace MonoDevelop.Ide.CodeCompletion
 					if (!SelectionEnabled /*&& !CompletionWindowManager.ForceSuggestionMode*/)
 						AutoCompleteEmptyMatch = AutoSelect = true;
 					if (!List.InCategoryMode) {
-						ListWidget.EnableCompletionCategoryMode.Set (true);
+						IdeApp.Preferences.EnableCompletionCategoryMode.Set (true);
 						List.UpdateCategoryMode ();
 						return KeyActions.Ignore;
 					}
@@ -392,7 +399,7 @@ namespace MonoDevelop.Ide.CodeCompletion
 					if (!SelectionEnabled /*&& !CompletionWindowManager.ForceSuggestionMode*/)
 						AutoCompleteEmptyMatch = AutoSelect = true;
 					if (!List.InCategoryMode) {
-						ListWidget.EnableCompletionCategoryMode.Set (true);
+						IdeApp.Preferences.EnableCompletionCategoryMode.Set (true);
 						List.UpdateCategoryMode ();
 						return KeyActions.Ignore;
 					}

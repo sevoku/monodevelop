@@ -61,6 +61,7 @@
     <Reference Include="GuiUnit">
       <HintPath>..\..\external\guiunit\bin\net_4_0\GuiUnit.exe</HintPath>
     </Reference>
+    <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Collections.Immutable">
       <HintPath>..\..\packages\System.Collections.Immutable.1.1.33-beta\lib\portable-net45+win8+wp8+wpa81\System.Collections.Immutable.dll</HintPath>
     </Reference>
@@ -264,6 +265,9 @@
     <Compile Include="MonoDevelop.Projects\SharedAssetsProjectTests.cs" />
     <Compile Include="MonoDevelop.Projects\WebProjectTests.cs" />
     <Compile Include="MonoDevelop.Ide.FindInFiles\ColorizationTests.cs" />
+    <Compile Include="MonoDevelop.Projects\ItemMetadataTests.cs" />
+    <Compile Include="MonoDevelop.Projects\MSBuildProjectTests.cs" />
+    <Compile Include="MonoDevelop.Projects\FlavorMigration.cs" />
     <Compile Include="MonoDevelop.Ide.Templates\ProjectTemplateCategorizerTests.cs" />
     <Compile Include="MonoDevelop.Ide.Templates\TestableProjectTemplateCategorizer.cs" />
     <Compile Include="MonoDevelop.Ide.Templates\FinalProjectConfigurationTests.cs" />
@@ -271,8 +275,10 @@
     <Compile Include="MonoDevelop.Ide.Templates\TestableWizardPage.cs" />
     <Compile Include="MonoDevelop.Ide.Templates\TestableTemplateWizard.cs" />
     <Compile Include="MonoDevelop.Ide.Templates\TestableTemplateWizardProvider.cs" />
+    <Compile Include="MonoDevelop.Projects\StringTagTests.cs" />
     <Compile Include="MonoDevelop.Ide.Templates\FileTemplateParserTests.cs" />
     <Compile Include="MonoDevelop.Ide.Templates\ProjectCreateInformationTests.cs" />
+    <Compile Include="MonoDevelop.Projects\PolicyTests.cs" />
     <Compile Include="MonoDevelop.Ide.Editor\TextSourceTestBase.cs" />
     <Compile Include="MonoDevelop.Ide.Editor\ReadonlyTextDocumentTestBase.cs" />
     <Compile Include="MonoDevelop.Ide.Editor\TextDocumentTestBase.cs" />

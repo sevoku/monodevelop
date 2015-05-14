@@ -61,10 +61,10 @@ namespace MonoDevelop.Projects.Formats.MSBuild
 
 		public MSBuildResult Run (
 			ProjectConfigurationInfo[] configurations, ILogWriter logWriter, MSBuildVerbosity verbosity,
-			string[] runTargets, string[] evaluateItems, string[] evaluateProperties)
+			string[] runTargets, string[] evaluateItems, string[] evaluateProperties, int taskId)
 		{
 			MSBuildResult result = null;
-			BuildEngine.RunSTA (delegate {
+			BuildEngine.RunSTA (taskId, delegate {
 				try {
 					var project = SetupProject (configurations);
 					currentLogWriter = logWriter;
@@ -136,7 +136,7 @@ namespace MonoDevelop.Projects.Formats.MSBuild
 					p = null;
 				}
 
-				Environment.CurrentDirectory = Path.GetDirectoryName (file);
+				Environment.CurrentDirectory = Path.GetDirectoryName (Path.GetFullPath (file));
 
 				if (p == null) {
 					p = new Project (buildEngine.Engine);
@@ -144,7 +144,7 @@ namespace MonoDevelop.Projects.Formats.MSBuild
 					if (content == null) {
 						p.Load (pc.ProjectFile);
 					} else {
-						p.FullFileName = pc.ProjectFile;
+						p.FullFileName = Path.GetFullPath (pc.ProjectFile);
 
 						if (HasXbuildFileBug ()) {
 							// Workaround for Xamarin bug #14295: Project.Load incorrectly resets the FullFileName property
@@ -167,7 +167,7 @@ namespace MonoDevelop.Projects.Formats.MSBuild
 					project = p;
 			}
 
-			Environment.CurrentDirectory = Path.GetDirectoryName (file);
+			Environment.CurrentDirectory = Path.GetDirectoryName (Path.GetFullPath (file));
 			return project;
 		}
 

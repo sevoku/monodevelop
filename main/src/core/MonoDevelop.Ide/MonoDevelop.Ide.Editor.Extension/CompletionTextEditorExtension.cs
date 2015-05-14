@@ -47,23 +47,9 @@ namespace MonoDevelop.Ide.Editor.Extension
 			set;
 		}
 
+		// (Settings have been moved to IdeApp.Preferences)
+
 		bool autoHideCompletionWindow = true, autoHideParameterWindow = true;
-
-		#region Completion related IDE
-		//		public readonly static PropertyWrapper<bool> EnableCodeCompletion = PropertyService.Wrap ("EnableCodeCompletion", true);
-		//		public readonly static PropertyWrapper<bool> EnableParameterInsight = PropertyService.Wrap ("EnableParameterInsight", true);
-		public readonly static PropertyWrapper<bool> EnableAutoCodeCompletion = PropertyService.Wrap ("EnableAutoCodeCompletion", true);
-		public readonly static PropertyWrapper<bool> AddImportedItemsToCompletionList = PropertyService.Wrap ("AddImportedItemsToCompletionList", false);
-		public readonly static PropertyWrapper<bool> IncludeKeywordsInCompletionList = PropertyService.Wrap ("IncludeKeywordsInCompletionList", true);
-		public readonly static PropertyWrapper<bool> IncludeCodeSnippetsInCompletionList = PropertyService.Wrap ("IncludeCodeSnippetsInCompletionList", true);
-		public readonly static PropertyWrapper<bool> AddParenthesesAfterCompletion = PropertyService.Wrap ("AddParenthesesAfterCompletion", false);
-		public readonly static PropertyWrapper<bool> AddOpeningOnly = PropertyService.Wrap ("AddOpeningOnly", false);
-		public readonly static int CompletionListRows = 7;
-
-		public readonly static PropertyWrapper<bool> FilterCompletionListByEditorBrowsable = PropertyService.Wrap ("FilterCompletionListByEditorBrowsable", true);
-		public readonly static PropertyWrapper<bool> IncludeEditorBrowsableAdvancedMembers = PropertyService.Wrap ("IncludeEditorBrowsableAdvancedMembers", true);
-
-		#endregion
 
 		ICompletionWidget completionWidget;
 		internal virtual ICompletionWidget CompletionWidget

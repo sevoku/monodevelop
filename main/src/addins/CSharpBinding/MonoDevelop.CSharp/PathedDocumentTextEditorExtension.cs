@@ -102,14 +102,14 @@ namespace MonoDevelop.CSharp
 		{
 			if (ownerProjects != null)
 				return;
-			UpdateOwnerProjects (e.Item.GetAllProjects ().OfType<DotNetProject> ());
+			UpdateOwnerProjects (e.Item.GetAllItems<DotNetProject> ());
 		}
 
 		void HandleWorkspaceItemUnloaded (object sender, WorkspaceItemEventArgs e)
 		{
 			if (ownerProjects == null)
 				return;
-			foreach (var p in e.Item.GetAllProjects ().OfType<DotNetProject> ()) {
+			foreach (var p in e.Item.GetAllItems<DotNetProject> ()) {
 				ownerProjects.Remove (p); 
 			}
 			if (ownerProjects.Count == 0) {
@@ -147,7 +147,7 @@ namespace MonoDevelop.CSharp
 
 		void UpdateOwnerProjects ()
 		{
-			UpdateOwnerProjects (IdeApp.Workspace.GetAllSolutionItems<DotNetProject> ());
+			UpdateOwnerProjects (IdeApp.Workspace.GetAllItems<DotNetProject> ());
 			if (DocumentContext.Project == null && ownerProjects.Count > 0)
 				DocumentContext.AttachToProject (ownerProjects[0]);
 		}

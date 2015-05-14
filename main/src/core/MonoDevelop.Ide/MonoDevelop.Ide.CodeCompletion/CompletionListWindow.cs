@@ -226,7 +226,7 @@ namespace MonoDevelop.Ide.CodeCompletion
 		
 		public void ToggleCategoryMode ()
 		{
-			ListWidget.EnableCompletionCategoryMode.Set (!ListWidget.EnableCompletionCategoryMode.Value); 
+			IdeApp.Preferences.EnableCompletionCategoryMode.Set (!IdeApp.Preferences.EnableCompletionCategoryMode.Value); 
 			List.UpdateCategoryMode ();
 			ResetSizes ();
 			List.QueueDraw ();
@@ -594,6 +594,10 @@ namespace MonoDevelop.Ide.CodeCompletion
 			} else {
 				declarationviewwindow.SetDefaultScheme ();
 			}
+			var style = Editor.Highlighting.SyntaxModeService.GetColorStyle (IdeApp.Preferences.ColorScheme);
+			declarationviewwindow.Theme.SetFlatColor (style.CompletionTooltipWindow.Color);
+			if (style.CompletionWindow.HasBorderColor)
+				declarationviewwindow.Theme.BorderColor = style.CompletionTooltipWindow.BorderColor;
 		}
 
 		void RepositionDeclarationViewWindow ()

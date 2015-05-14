@@ -1188,7 +1188,7 @@ namespace MonoDevelop.AssemblyBrowser
 			}
 		}
 
-		void OpenFromAssembly (string url, AssemblyLoader currentAssembly)
+		async void OpenFromAssembly (string url, AssemblyLoader currentAssembly)
 		{
 			var cecilObject = loader.GetCecilObject (currentAssembly.UnresolvedAssembly);
 			if (cecilObject == null)
@@ -1210,7 +1210,6 @@ namespace MonoDevelop.AssemblyBrowser
 				}
 				var result = AddReferenceByFileName (fileName);
 				result.LoadingTask.ContinueWith (t2 => {
-					t2.Wait ();
 					if (definitions == null) // disposed
 						return;
 					Application.Invoke (delegate {

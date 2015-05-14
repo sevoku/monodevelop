@@ -55,7 +55,7 @@ namespace MonoDevelop.Refactoring.Rename
 			try {
 				var result = new RenameRefactoring ().PerformChanges (symbol, new RenameProperties () { NewName = newName });
 
-				using (var monitor = new NullProgressMonitor ()) {
+				using (var monitor = new ProgressMonitor ()) {
 					if (result.Count > 0) {
 						RefactoringService.AcceptChanges (monitor, result);
 					}

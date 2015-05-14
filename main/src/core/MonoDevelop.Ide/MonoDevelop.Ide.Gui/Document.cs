@@ -369,7 +369,7 @@ namespace MonoDevelop.Ide.Gui
 					} else {
 						string fileName = Window.ViewContent.ContentName;
 						// save backup first						
-						if ((bool)PropertyService.Get ("SharpDevelop.CreateBackupCopy", false)) {
+						if (IdeApp.Preferences.CreateFileBackupCopies) {
 							Window.ViewContent.Save (fileName + "~");
 							FileService.NotifyFileChanged (fileName);
 						}
@@ -448,7 +448,7 @@ namespace MonoDevelop.Ide.Gui
 			}
 			
 			// save backup first
-			if ((bool)PropertyService.Get ("SharpDevelop.CreateBackupCopy", false)) {
+			if (IdeApp.Preferences.CreateFileBackupCopies) {
 				if (tbuffer != null && encoding != null)
 					TextFileUtility.WriteText (filename + "~", tbuffer.Text, encoding, tbuffer.UseBOM);
 				else
@@ -463,53 +463,6 @@ namespace MonoDevelop.Ide.Gui
 			
 			OnSaved (EventArgs.Empty);
 			UpdateParseDocument ();
-		}
-		
-		public bool IsBuildTarget
-		{
-			get
-			{
-				if (this.IsViewOnly)
-					return false;
-				if (Window.ViewContent.ContentName != null)
-					return Services.ProjectService.CanCreateSingleFileProject(Window.ViewContent.ContentName);
-				
-				return false;
-			}
-		}
-		
-		public IAsyncOperation Build ()
-		{
-			return IdeApp.ProjectOperations.BuildFile (Window.ViewContent.ContentName);
-		}
-		
-		public IAsyncOperation Rebuild ()
-		{
-			return Build ();
-		}
-		
-		public void Clean ()
-		{
-		}
-		
-		public IAsyncOperation Run ()
-		{
-			return Run (Runtime.ProcessService.DefaultExecutionHandler);
-		}
-
-		public IAsyncOperation Run (IExecutionHandler handler)
-		{
-			return IdeApp.ProjectOperations.ExecuteFile (Window.ViewContent.ContentName, handler);
-		}
-
-		public bool CanRun ()
-		{
-			return CanRun (Runtime.ProcessService.DefaultExecutionHandler);
-		}
-		
-		public bool CanRun (IExecutionHandler handler)
-		{
-			return IsBuildTarget && Window.ViewContent.ContentName != null && IdeApp.ProjectOperations.CanExecuteFile (Window.ViewContent.ContentName, handler);
 		}
 		
 		public bool Close ()
@@ -824,7 +777,7 @@ namespace MonoDevelop.Ide.Gui
 						return;
 					}
 					if (Editor != null && Editor.MimeType == "text/x-csharp") {
-						var newProject = new DotNetAssemblyProject (Microsoft.CodeAnalysis.LanguageNames.CSharp);
+						var newProject = Services.ProjectService.CreateDotNetProject ("C#");
 						this.adhocProject = newProject;
 
 						newProject.Name = "InvisibleProject";
@@ -839,7 +792,7 @@ namespace MonoDevelop.Ide.Gui
 						var solution = new Solution ();
 						solution.AddConfiguration ("", true);
 						solution.DefaultSolutionFolder.AddItem (newProject);
-						using (var monitor = new MonoDevelop.Core.ProgressMonitoring.NullProgressMonitor ())
+						using (var monitor = new ProgressMonitor ())
 							RoslynWorkspace = TypeSystemService.Load (solution, monitor, false);
 						analysisDocument = TypeSystemService.GetDocumentId (RoslynWorkspace, adhocProject, adHocFile);
 						TypeSystemService.InformDocumentOpen (RoslynWorkspace, analysisDocument, Editor);
@@ -888,7 +841,7 @@ namespace MonoDevelop.Ide.Gui
 				CancelOldParsing ();
 				var token = parseTokenSource.Token;
 				var project = Project ?? adhocProject;
-				var projectFile = project.GetProjectFile (currentParseFile);
+				var projectFile = project?.GetProjectFile (currentParseFile);
 				ThreadPool.QueueUserWorkItem (delegate {
 					TypeSystemService.AddSkippedFile (currentParseFile);
 					if (project != null && TypeSystemService.CanParseProjections (project, mimeType, currentParseFile)) {
