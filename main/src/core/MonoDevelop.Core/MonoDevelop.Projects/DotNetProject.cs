@@ -778,7 +778,7 @@ namespace MonoDevelop.Projects
 					return rInfo;
 				}
 			}
-			ProjectReference newReferenceInformation = new ProjectReference (ReferenceType.Assembly, filename);
+			ProjectReference newReferenceInformation = ProjectReference.CreateAssemblyFileReference (filename);
 			References.Add (newReferenceInformation);
 			return newReferenceInformation;
 		}
@@ -864,6 +864,18 @@ namespace MonoDevelop.Projects
 				if (sa != null)
 					yield return sa.Location;
 			}
+		}
+
+		protected override Task<BuildResult> DoBuild (ProgressMonitor monitor, ConfigurationSelector configuration)
+		{
+			var handler = new MD1DotNetProjectHandler (this);
+			return handler.RunTarget (monitor, "Build", configuration);
+		}
+
+		protected override Task<BuildResult> DoClean (ProgressMonitor monitor, ConfigurationSelector configuration)
+		{
+			var handler = new MD1DotNetProjectHandler (this);
+			return handler.RunTarget (monitor, "Clean", configuration);
 		}
 
 		protected internal override Task OnSave (ProgressMonitor monitor)

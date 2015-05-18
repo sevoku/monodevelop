@@ -117,7 +117,7 @@ namespace MonoDevelop.Projects
 			Solution sol = TestProjectsChecks.CreateConsoleSolution ("console-project-msbuild");
 			sol.ConvertToFormat (MSBuildFileFormat.VS2010);
 			Project p = sol.Items [0] as Project;
-			p.GlobalProperties.SetValue ("TestProperty", "TestValue");
+			p.ProjectProperties.SetValue ("TestProperty", "TestValue");
 
 			await sol.SaveAsync (Util.GetMonitor ());
 
@@ -502,7 +502,6 @@ namespace MonoDevelop.Projects
 				Assert.IsTrue (f.ErrorText.Contains (clientProfileError), "Build failed with: " + f.ErrorText);
 
 			string projectFile = ((Project)sol.Items [0]).FileName;
-			string solXml = Util.ReadAllWithWindowsEndings (solFile);
 			string projectXml = Util.ReadAllWithWindowsEndings (projectFile);
 
 			await sol.SaveAsync (monitor);
@@ -1146,6 +1145,102 @@ namespace MonoDevelop.Projects
 
 			Assert.AreEqual (refXml, savedXml);
 		}
+
+		[Test]
+		public async Task AddProjectConfigurationWithProperties ()
+		{
+			string solFile = Util.GetSampleProject ("console-project", "ConsoleProject.sln");
+
+			Solution sol = (Solution) await Services.ProjectService.ReadWorkspaceItem (Util.GetMonitor (), solFile);
+			var p = (Project) sol.Items [0];
+
+			var conf = p.CreateConfiguration ("Test");
+			conf.Properties.SetValue ("TestProperty", "TestValue");
+			conf.Properties.SetValue ("TestPath", p.BaseDirectory.Combine ("Subdir","SomeFile.txt"));
+			p.Configurations.Add (conf);
+
+			await p.SaveAsync (Util.GetMonitor ());
+
+			var refXml = File.ReadAllText (p.FileName + ".config-props-added");
+			var savedXml = File.ReadAllText (p.FileName);
+			Assert.AreEqual (refXml, savedXml);
+			sol.Dispose ();
+
+			sol = (Solution) await Services.ProjectService.ReadWorkspaceItem (Util.GetMonitor (), solFile);
+			p = (Project) sol.Items [0];
+
+			conf = p.Configurations.OfType<ProjectConfiguration> ().FirstOrDefault (c => c.Name == "Test");
+			Assert.AreEqual ("TestValue", conf.Properties.GetValue ("TestProperty"));
+			Assert.AreEqual (p.BaseDirectory.Combine ("Subdir","SomeFile.txt"), conf.Properties.GetPathValue ("TestPath"));
+		}
+
+		[Test]
+		public async Task RenameProjectConfiguration ()
+		{
+			// Change the name of the Debug configuration.
+			// - The configuration condition in the msbuild file has to change.
+			// - The default configuration has to change
+
+			string solFile = Util.GetSampleProject ("console-project", "ConsoleProject.sln");
+
+			Solution sol = (Solution) await Services.ProjectService.ReadWorkspaceItem (Util.GetMonitor (), solFile);
+			var p = (Project) sol.Items [0];
+
+			var conf = p.Configurations.OfType<ProjectConfiguration> ().FirstOrDefault (c => c.Name == "Debug");
+			conf.Name = "Test";
+
+			await p.SaveAsync (Util.GetMonitor ());
+
+			var refXml = File.ReadAllText (p.FileName + ".config-renamed");
+			var savedXml = File.ReadAllText (p.FileName);
+			Assert.AreEqual (refXml, savedXml);
+		}
+
+		[Test]
+		public async Task CustomProjectItemWithMetadata ()
+		{
+			// Save a custom item with metadata
+
+			try {
+				MSBuildProjectService.RegisterCustomProjectItemType ("CustomItem", typeof(CustomItem));
+
+				string solFile = Util.GetSampleProject ("console-project", "ConsoleProject.sln");
+
+				Solution sol = (Solution) await Services.ProjectService.ReadWorkspaceItem (Util.GetMonitor (), solFile);
+				var p = (Project) sol.Items [0];
+
+				CustomItem it = new CustomItem {
+					SomeMetadata = "FooTest"
+				};
+				p.Items.Add (it);
+
+				await p.SaveAsync (Util.GetMonitor ());
+
+				var refXml = File.ReadAllText (p.FileName + ".custom-item");
+				var savedXml = File.ReadAllText (p.FileName);
+				Assert.AreEqual (refXml, savedXml);
+
+				sol.Dispose ();
+
+				sol = (Solution) await Services.ProjectService.ReadWorkspaceItem (Util.GetMonitor (), solFile);
+				p = (Project) sol.Items [0];
+
+				it = p.Items.OfType<CustomItem> ().FirstOrDefault ();
+				Assert.IsNotNull (it);
+				Assert.AreEqual ("TestInclude", it.Include);
+				Assert.AreEqual ("FooTest", it.SomeMetadata);
+			}
+			finally {
+				MSBuildProjectService.UnregisterCustomProjectItemType ("CustomItem");
+			}
+		}
+
+/*		[Test]
+		public async Task RunTargetInMemory ()
+		{
+			Solution sol = TestProjectsChecks.CreateConsoleSolution ("console-project-msbuild");
+
+		}*/
 	}
 
 	class MyProjectTypeNode: ProjectTypeNode
@@ -1207,5 +1302,19 @@ namespace MonoDevelop.Projects
 
 		[ItemProperty (IsExternal = true)]
 		public MyProjectData Data;
+	}
+
+	class CustomItem: ProjectItem
+	{
+		public override string Include {
+			get {
+				return "TestInclude";
+			}
+			protected set {
+			}
+		}
+
+		[ItemProperty]
+		public string SomeMetadata { get; set; }
 	}
 }

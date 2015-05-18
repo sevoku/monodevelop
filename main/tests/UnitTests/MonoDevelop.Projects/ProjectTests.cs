@@ -444,11 +444,11 @@ namespace MonoDevelop.Projects
 			var file = (FilePath) GetType ().Assembly.Location;
 			var asmName = Path.GetFileNameWithoutExtension (file);
 
-			var r = new ProjectReference (ReferenceType.Assembly, file);
+			var r = ProjectReference.CreateAssemblyFileReference (file);
 			Assert.AreEqual (asmName, r.Reference);
 			Assert.AreEqual (file, r.HintPath);
 
-			r = new ProjectReference (ReferenceType.Assembly, "Foo", file);
+			r = ProjectReference.CreateCustomReference (ReferenceType.Assembly, "Foo", file);
 			Assert.AreEqual ("Foo", r.Reference);
 			Assert.AreEqual (file, r.HintPath);
 
@@ -515,7 +515,7 @@ namespace MonoDevelop.Projects
 			Solution sol = (Solution) await Services.ProjectService.ReadWorkspaceItem (Util.GetMonitor (), solFile);
 
 			var p = (DotNetProject) sol.Items [0];
-			p.References.Add (new ProjectReference (ReferenceType.Package, "System.Xml.Linq"));
+			p.References.Add (ProjectReference.CreateAssemblyReference ("System.Xml.Linq"));
 
 			var refs = p.GetReferencedAssemblies (ConfigurationSelector.Default).ToArray ();
 
@@ -535,7 +535,7 @@ namespace MonoDevelop.Projects
 			// This will force the loading of the builder
 			p.GetReferencedAssemblies (ConfigurationSelector.Default).ToArray ();
 
-			p.References.Add (new ProjectReference (ReferenceType.Package, "System.Xml.Linq"));
+			p.References.Add (ProjectReference.CreateAssemblyReference ("System.Xml.Linq"));
 
 			var refs = p.GetReferencedAssemblies (ConfigurationSelector.Default).ToArray ();
 
@@ -635,10 +635,10 @@ namespace MonoDevelop.Projects
 			Solution sol = (Solution) await Services.ProjectService.ReadWorkspaceItem (Util.GetMonitor (), solFile);
 
 			var p = (DotNetProject) sol.Items [0];
-			p.References.Add (new ProjectReference (ReferenceType.Package, "System.Xml.Linq"));
+			p.References.Add (ProjectReference.CreateAssemblyReference ("System.Xml.Linq"));
 
 			var asm = p.AssemblyContext.GetAssemblies ().FirstOrDefault (a => a.Name == "System.Net");
-			p.References.Add (new ProjectReference (asm));
+			p.References.Add (ProjectReference.CreateAssemblyReference (asm));
 
 			await p.SaveAsync (Util.GetMonitor ());
 
@@ -704,6 +704,24 @@ namespace MonoDevelop.Projects
 
 			var res = await p.Build (Util.GetMonitor (), (SolutionConfigurationSelector) "Debug", true);
 			Assert.AreEqual (1, res.ErrorCount);
+		}
+
+		[Test]
+		public async Task UserProperties ()
+		{
+			string solFile = Util.GetSampleProject ("console-project", "ConsoleProject.sln");
+			Solution sol = (Solution) await Services.ProjectService.ReadWorkspaceItem (Util.GetMonitor (), solFile);
+			var p = (DotNetProject) sol.Items [0];
+			sol.UserProperties.SetValue ("SolProp", "foo");
+			p.UserProperties.SetValue ("ProjectProp", "bar");
+			await sol.SaveUserProperties ();
+			sol.Dispose ();
+
+			sol = (Solution) await Services.ProjectService.ReadWorkspaceItem (Util.GetMonitor (), solFile);
+			p = (DotNetProject) sol.Items [0];
+
+			Assert.AreEqual ("foo", sol.UserProperties.GetValue<string> ("SolProp"));
+			Assert.AreEqual ("bar", p.UserProperties.GetValue<string> ("ProjectProp"));
 		}
 	}
 

@@ -46,8 +46,10 @@ namespace MonoDevelop.Projects
 
 		internal void SetProject (MSBuildProject project)
 		{
-			foreach (var p in propertyList)
+			foreach (var p in propertyList) {
 				p.Project = project;
+				p.ResolvePath ();
+			}
 		}
 
 		internal void LoadProperties (XmlElement element)
@@ -173,6 +175,17 @@ namespace MonoDevelop.Projects
 			else
 				propertyList.Add (prop);
 			return prop;
+		}
+
+		internal void AddProperty (ItemMetadataProperty prop)
+		{
+			if (properties == null) {
+				properties = new Dictionary<string, MSBuildProperty> ();
+				propertyList = new List<MSBuildProperty> ();
+			}
+			prop.Project = project;
+			properties [prop.Name] = prop;
+			propertyList.Add (prop);
 		}
 
 		MSBuildProperty FindExistingProperty (int index, int inc)

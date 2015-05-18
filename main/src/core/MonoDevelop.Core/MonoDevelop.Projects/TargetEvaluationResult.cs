@@ -1,5 +1,5 @@
 ﻿//
-// MSBuildValueType.cs
+// TargetResult.cs
 //
 // Author:
 //       Lluis Sanchez Gual <lluis@xamarin.com>
@@ -24,38 +24,39 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 using System;
+using System.Collections.Generic;
+using MonoDevelop.Projects.Formats.MSBuild;
 
-namespace MonoDevelop.Projects.Formats.MSBuild
+namespace MonoDevelop.Projects
 {
-	class MSBuildValueType
+	public class TargetEvaluationResult
 	{
-		public static readonly MSBuildValueType Default = new MSBuildValueType ();
-		public static readonly MSBuildValueType DefaultPreserveCase = new PreserveCaseValueType ();
-		public static readonly MSBuildValueType Path = new PathValueType ();
-		public static readonly MSBuildValueType Boolean = new PreserveCaseValueType ();
-		public static readonly MSBuildValueType UnresolvedPath = new PathValueType ();
+		readonly BuildResult buildResult;
+		readonly IReadOnlyPropertySet properties;
+		readonly IEnumerable<IMSBuildItemEvaluated> items;
 
-		public virtual bool Equals (string ob1, string ob2)
+		public TargetEvaluationResult (BuildResult buildResult)
 		{
-			return object.Equals (ob1, ob2);
+			this.buildResult = buildResult;
 		}
-	}
 
-	class PathValueType: MSBuildValueType
-	{
-		public override bool Equals (string ob1, string ob2)
+		public TargetEvaluationResult (BuildResult buildResult, IEnumerable<IMSBuildItemEvaluated> items, IReadOnlyPropertySet properties)
 		{
-			if (base.Equals (ob1, ob2))
-				return true;
-			return ob1.TrimEnd ('\\') == ob2.TrimEnd ('\\');
+			this.buildResult = buildResult;
+			this.items = items;
+			this.properties = properties;
 		}
-	}
 
-	class PreserveCaseValueType: MSBuildValueType
-	{
-		public override bool Equals (string ob1, string ob2)
-		{
-			return ob1.Equals (ob2, StringComparison.OrdinalIgnoreCase);
+		public BuildResult BuildResult {
+			get { return buildResult; }
+		}
+
+		public IEnumerable<IMSBuildItemEvaluated> Items {
+			get { return items; }
+		}
+
+		public IReadOnlyPropertySet Properties {
+			get { return properties; }
 		}
 	}
 }

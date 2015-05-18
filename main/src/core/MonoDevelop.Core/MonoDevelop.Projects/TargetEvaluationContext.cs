@@ -1,5 +1,5 @@
 ﻿//
-// MSBuildValueType.cs
+// TargetEvaluationContext.cs
 //
 // Author:
 //       Lluis Sanchez Gual <lluis@xamarin.com>
@@ -24,39 +24,24 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 using System;
+using System.Collections.Generic;
 
-namespace MonoDevelop.Projects.Formats.MSBuild
+namespace MonoDevelop.Projects
 {
-	class MSBuildValueType
+	public class TargetEvaluationContext
 	{
-		public static readonly MSBuildValueType Default = new MSBuildValueType ();
-		public static readonly MSBuildValueType DefaultPreserveCase = new PreserveCaseValueType ();
-		public static readonly MSBuildValueType Path = new PathValueType ();
-		public static readonly MSBuildValueType Boolean = new PreserveCaseValueType ();
-		public static readonly MSBuildValueType UnresolvedPath = new PathValueType ();
-
-		public virtual bool Equals (string ob1, string ob2)
+		public TargetEvaluationContext ()
 		{
-			return object.Equals (ob1, ob2);
+			PropertiesToEvaluate = new HashSet<string> ();
+			ItemsToEvaluate = new HashSet<string> ();
+			GlobalProperties = new ProjectItemMetadata (null);
 		}
-	}
 
-	class PathValueType: MSBuildValueType
-	{
-		public override bool Equals (string ob1, string ob2)
-		{
-			if (base.Equals (ob1, ob2))
-				return true;
-			return ob1.TrimEnd ('\\') == ob2.TrimEnd ('\\');
-		}
-	}
+		public IPropertySet GlobalProperties { get; private set; }
 
-	class PreserveCaseValueType: MSBuildValueType
-	{
-		public override bool Equals (string ob1, string ob2)
-		{
-			return ob1.Equals (ob2, StringComparison.OrdinalIgnoreCase);
-		}
+		public HashSet<string> PropertiesToEvaluate { get; private set; }
+
+		public HashSet<string> ItemsToEvaluate { get; private set; }
 	}
 }
 
