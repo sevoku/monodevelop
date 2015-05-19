@@ -142,10 +142,10 @@ namespace MonoDevelop.Ide.Templates
 			AddOneWizardPage ();
 
 			bool result = provider.MoveToFirstPage (template, parameters);
-			bool supported = wizard.IsSupportedParameter ("Unknown");
+			bool notSupported = wizard.IsSupportedParameter ("Unknown");
 
 			Assert.IsTrue (result);
-			Assert.IsTrue (supported);
+			Assert.IsFalse (notSupported);
 		}
 
 		[Test]
