@@ -242,7 +242,7 @@ namespace MonoDevelop.Projects
 			
 			await p.SaveAsync (Util.GetMonitor ());
 
-			Assert.AreEqual (File.ReadAllText (p.FileName + ".saved"), File.ReadAllText (p.FileName));
+			Assert.AreEqual (Util.ToSystemEndings (File.ReadAllText (p.FileName + ".saved")), File.ReadAllText (p.FileName));
 		}
 		
 		[Test]
@@ -268,7 +268,7 @@ namespace MonoDevelop.Projects
 			
 			await p.SaveAsync (Util.GetMonitor ());
 
-			Assert.AreEqual (File.ReadAllText (p.FileName + ".saved"), File.ReadAllText (p.FileName));
+			Assert.AreEqual (Util.ToSystemEndings (File.ReadAllText (p.FileName + ".saved")), File.ReadAllText (p.FileName));
 		}
 		
 		[Test]
@@ -289,7 +289,7 @@ namespace MonoDevelop.Projects
 			
 			await p.SaveAsync (Util.GetMonitor ());
 
-			Assert.AreEqual (File.ReadAllText (p.FileName + ".saved"), File.ReadAllText (p.FileName));
+			Assert.AreEqual (Util.ToSystemEndings (File.ReadAllText (p.FileName + ".saved")), File.ReadAllText (p.FileName));
 		}
 		
 		[Test]
@@ -311,7 +311,7 @@ namespace MonoDevelop.Projects
 			
 			await p.SaveAsync (Util.GetMonitor ());
 
-			Assert.AreEqual (File.ReadAllText (p.FileName + ".saved"), File.ReadAllText (p.FileName));
+			Assert.AreEqual (Util.ToSystemEndings (File.ReadAllText (p.FileName + ".saved")), File.ReadAllText (p.FileName));
 		}
 		
 		[Test]
@@ -333,7 +333,7 @@ namespace MonoDevelop.Projects
 			
 			await p.SaveAsync (Util.GetMonitor ());
 
-			Assert.AreEqual (File.ReadAllText (p.FileName + ".saved"), File.ReadAllText (p.FileName));
+			Assert.AreEqual (Util.ToSystemEndings (File.ReadAllText (p.FileName + ".saved")), File.ReadAllText (p.FileName));
 		}
 		
 		[Test]
@@ -873,7 +873,21 @@ namespace MonoDevelop.Projects
 			var p = await Services.ProjectService.ReadSolutionItem (Util.GetMonitor (), projFile);
 			Assert.IsInstanceOf<Project> (p);
 			var mp = (Project) p;
-			Assert.AreEqual(new string[] {"None", "Compile", "EmbeddedResource", "--", "Content", "ItemOne", "ItemTwo"}, mp.GetBuildActions ());
+
+			var actions = mp.GetBuildActions ();
+
+			// The main actions should always be the same and in the same position
+
+			Assert.AreEqual (0, Array.IndexOf (actions, "None"), "'None' not found or in wrong position");
+			Assert.AreEqual (1, Array.IndexOf (actions, "Compile"), "'Compile' not found or in wrong position");
+			Assert.AreEqual (2, Array.IndexOf (actions, "EmbeddedResource"), "'EmbeddedResource' not found or in wrong position");
+			Assert.AreEqual (3, Array.IndexOf (actions, "--"), "'--' not found or in wrong position");
+
+			// The remaining actions may vary depending on the platform, but some of them must be there
+
+			Assert.IsTrue (actions.Contains ("Content"), "'Content' not found");
+			Assert.IsTrue (actions.Contains ("ItemOne"), "'ItemOne' not found");
+			Assert.IsTrue (actions.Contains ("ItemTwo"), "'ItemTwo' not found");
 		}
 
 		[Test]
@@ -911,7 +925,7 @@ namespace MonoDevelop.Projects
 
 			await p.SaveAsync (Util.GetMonitor ());
 
-			Assert.AreEqual (File.ReadAllText (p.FileName + ".saved1"), File.ReadAllText (p.FileName));
+			Assert.AreEqual (Util.ToSystemEndings (File.ReadAllText (p.FileName + ".saved1")), File.ReadAllText (p.FileName));
 		}
 
 		[Test]
@@ -931,7 +945,7 @@ namespace MonoDevelop.Projects
 
 			await p.SaveAsync (Util.GetMonitor ());
 
-			Assert.AreEqual (File.ReadAllText (p.FileName + ".saved2"), File.ReadAllText (p.FileName));
+			Assert.AreEqual (Util.ToSystemEndings (File.ReadAllText (p.FileName + ".saved2")), File.ReadAllText (p.FileName));
 		}
 
 		[Test]
@@ -1105,7 +1119,7 @@ namespace MonoDevelop.Projects
 
 			await p.SaveAsync (Util.GetMonitor ());
 
-			refXml = File.ReadAllText (projFile + ".saved2");
+			refXml = Util.ToSystemEndings (File.ReadAllText (projFile + ".saved2"));
 			savedXml = File.ReadAllText (projFile);
 			Assert.AreEqual (refXml, savedXml);
 
@@ -1114,7 +1128,7 @@ namespace MonoDevelop.Projects
 
 			await p.SaveAsync (Util.GetMonitor ());
 
-			refXml = File.ReadAllText (projFile + ".saved3");
+			refXml = Util.ToSystemEndings (File.ReadAllText (projFile + ".saved3"));
 			savedXml = File.ReadAllText (projFile);
 			Assert.AreEqual (refXml, savedXml);
 
@@ -1123,7 +1137,7 @@ namespace MonoDevelop.Projects
 
 			await p.SaveAsync (Util.GetMonitor ());
 
-			refXml = File.ReadAllText (projFile + ".saved4");
+			refXml = Util.ToSystemEndings (File.ReadAllText (projFile + ".saved4"));
 			savedXml = File.ReadAllText (projFile);
 			Assert.AreEqual (refXml, savedXml);
 		}
@@ -1161,7 +1175,7 @@ namespace MonoDevelop.Projects
 
 			await p.SaveAsync (Util.GetMonitor ());
 
-			var refXml = File.ReadAllText (p.FileName + ".config-props-added");
+			var refXml = Util.ToSystemEndings (File.ReadAllText (p.FileName + ".config-props-added"));
 			var savedXml = File.ReadAllText (p.FileName);
 			Assert.AreEqual (refXml, savedXml);
 			sol.Dispose ();
@@ -1188,10 +1202,11 @@ namespace MonoDevelop.Projects
 
 			var conf = p.Configurations.OfType<ProjectConfiguration> ().FirstOrDefault (c => c.Name == "Debug");
 			conf.Name = "Test";
+			conf.IntermediateOutputDirectory = p.BaseDirectory.Combine ("obj","Test");
 
 			await p.SaveAsync (Util.GetMonitor ());
 
-			var refXml = File.ReadAllText (p.FileName + ".config-renamed");
+			var refXml = Util.ToSystemEndings (File.ReadAllText (p.FileName + ".config-renamed"));
 			var savedXml = File.ReadAllText (p.FileName);
 			Assert.AreEqual (refXml, savedXml);
 		}
@@ -1216,7 +1231,7 @@ namespace MonoDevelop.Projects
 
 				await p.SaveAsync (Util.GetMonitor ());
 
-				var refXml = File.ReadAllText (p.FileName + ".custom-item");
+				var refXml = Util.ToSystemEndings (File.ReadAllText (p.FileName + ".custom-item"));
 				var savedXml = File.ReadAllText (p.FileName);
 				Assert.AreEqual (refXml, savedXml);
 
