@@ -56,7 +56,7 @@ namespace MonoDevelop.Ide.Templates
 
 		static MonoDevelop.Core.Instrumentation.Counter TemplateCounter = MonoDevelop.Core.Instrumentation.InstrumentationService.CreateCounter ("Template Instantiated", "Project Model", id:"Core.Template.Instantiated");
 
-		private List<string> actions = new List<string> ();
+		private List<ActionDescriptor> actions = new List<ActionDescriptor> ();
 
 		private string createdSolutionName;
 		IList<PackageReferencesForCreatedProject> packageReferencesForCreatedProjects = new List<PackageReferencesForCreatedProject> ();
@@ -66,7 +66,7 @@ namespace MonoDevelop.Ide.Templates
 			get { return createdSolutionName; }
 		}
 
-		internal IEnumerable<string> Actions {
+		internal IEnumerable<ActionDescriptor> Actions {
 			get { return actions; }
 		}
 
@@ -297,7 +297,7 @@ namespace MonoDevelop.Ide.Templates
 			if (xmlDocument.DocumentElement ["Actions"] != null) {
 				foreach (XmlNode xmlElement in xmlDocument.DocumentElement ["Actions"]) {
 					if (xmlElement is XmlElement && xmlElement.Attributes ["filename"] != null)
-						actions.Add (xmlElement.Attributes ["filename"].Value);
+						actions.Add (new ActionDescriptor ((XmlElement)xmlElement));
 				}
 			}
 		}
@@ -311,8 +311,8 @@ namespace MonoDevelop.Ide.Templates
 		public async Task<bool> OpenCreatedSolution ()
 		{
 			if (await IdeApp.Workspace.OpenWorkspaceItem (createdSolutionName)) {
-				foreach (string action in actions)
-					IdeApp.Workbench.OpenDocument (Path.Combine (createdProjectInformation.ProjectBasePath, action));
+				foreach (ActionDescriptor action in actions)
+					IdeApp.Workbench.OpenDocument (Path.Combine (createdProjectInformation.ProjectBasePath, action.Filename));
 				return true;
 			}
 			return false;

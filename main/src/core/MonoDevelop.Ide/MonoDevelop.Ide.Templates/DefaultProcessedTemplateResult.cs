@@ -58,7 +58,7 @@ namespace MonoDevelop.Ide.Templates
 			}
 		}
 
-		public override IEnumerable<string> Actions {
+		public override IEnumerable<ActionDescriptor> Actions {
 			get { return template.Actions; }
 		}
 	}
