@@ -1,5 +1,5 @@
 ﻿//
-// ActionDescriptionTemplate.cs
+// ActionDescriptor.cs
 //
 // Author:
 //       Vincent Dondain <vincent.dondain@xamarin.com>
@@ -28,7 +28,7 @@ using System.Xml;
 
 namespace MonoDevelop.Ide.Templates
 {
-	public class ActionDescriptor
+	class ActionDescriptor
 	{
 		readonly XmlElement elem;
 

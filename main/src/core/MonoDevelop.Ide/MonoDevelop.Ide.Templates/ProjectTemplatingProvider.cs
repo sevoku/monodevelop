@@ -30,11 +30,13 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using MonoDevelop.Core;
 using MonoDevelop.Ide.Projects;
 using MonoDevelop.Projects;
-using MonoDevelop.Core;
 
 namespace MonoDevelop.Ide.Templates
 {
@@ -70,12 +72,21 @@ namespace MonoDevelop.Ide.Templates
 			} else {
 				newItems = template.Template.CreateProjects (parentFolder, cinfo);
 			}
-			return new DefaultProcessedTemplateResult (template.Template, newItems, cinfo.ProjectBasePath);
+
+			var actionsList = new List<Action> ();
+			foreach (var action in template.Template.Actions) {
+				if (cinfo.ShouldCreate (action.CreateCondition)) {
+					actionsList.Add (new Action (() => IdeApp.Workbench.OpenDocument (Path.Combine (cinfo.ProjectBasePath, action.Filename))));
+				}
+			}
+			return new DefaultProcessedTemplateResult (template.Template, newItems, cinfo.ProjectBasePath) {
+				Actions = actionsList
+			};
 		}
 
 		ProjectCreateInformation CreateProjectCreateInformation (NewProjectConfiguration config, SolutionFolder parentFolder)
 		{
-			ProjectCreateInformation cinfo = new ProjectCreateInformation ();
+			var cinfo = new ProjectCreateInformation ();
 			cinfo.SolutionPath = new FilePath (config.SolutionLocation).ResolveLinks ();
 			cinfo.ProjectBasePath = new FilePath (config.ProjectLocation).ResolveLinks ();
 			cinfo.ProjectName = config.ProjectName;

@@ -24,13 +24,14 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using MonoDevelop.Projects;
 
 namespace MonoDevelop.Ide.Templates
 {
-	internal class DefaultProcessedTemplateResult : ProcessedTemplateResult
+	class DefaultProcessedTemplateResult : ProcessedTemplateResult
 	{
 		readonly ProjectTemplate template;
 		readonly List<IWorkspaceFileObject> workspaceItems;
@@ -58,9 +59,7 @@ namespace MonoDevelop.Ide.Templates
 			}
 		}
 
-		public override IEnumerable<ActionDescriptor> Actions {
-			get { return template.Actions; }
-		}
+		public override IEnumerable<Action> Actions { get; set; }
 	}
 }
 

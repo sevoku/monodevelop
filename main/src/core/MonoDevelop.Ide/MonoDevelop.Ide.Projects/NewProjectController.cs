@@ -441,10 +441,6 @@ namespace MonoDevelop.Ide.Projects
 
 		public async Task Create ()
 		{
-			var newProjectControllerCI = new ProjectCreateInformation {
-				Parameters = FinalConfiguration.Parameters
-			};
-
 			if (wizardProvider.HasWizard)
 				wizardProvider.BeforeProjectIsCreated ();
 
@@ -505,7 +501,7 @@ namespace MonoDevelop.Ide.Projects
 			if (OpenSolution) {
 				DisposeExistingNewItems ();
 				TemplateWizard wizard = wizardProvider.CurrentWizard;
-				if (await OpenCreatedSolution (processedTemplate, newProjectControllerCI)) {
+				if (await OpenCreatedSolution (processedTemplate)) {
 					var sol = IdeApp.Workspace.GetAllSolutions ().FirstOrDefault ();
 					if (sol != null) {
 						if (wizard != null)
@@ -518,7 +514,7 @@ namespace MonoDevelop.Ide.Projects
 				// The item is not a solution being opened, so it is going to be added to
 				// an existing item. In this case, it must not be disposed by the dialog.
 				disposeNewItem = false;
-				RunTemplateActions (processedTemplate, newProjectControllerCI);
+				RunTemplateActions (processedTemplate);
 				if (wizardProvider.HasWizard)
 					wizardProvider.CurrentWizard.ItemsCreated (processedTemplate.WorkspaceItems);
 				if (ParentFolder != null)
@@ -615,21 +611,19 @@ namespace MonoDevelop.Ide.Projects
 			}
 		}
 
-		static async Task<bool> OpenCreatedSolution (ProcessedTemplateResult templateResult, ProjectCreateInformation projectCI)
+		static async Task<bool> OpenCreatedSolution (ProcessedTemplateResult templateResult)
 		{
 			if (await IdeApp.Workspace.OpenWorkspaceItem (templateResult.SolutionFileName)) {
-				RunTemplateActions (templateResult, projectCI);
+				RunTemplateActions (templateResult);
 				return true;
 			}
 			return false;
 		}
 
-		static void RunTemplateActions (ProcessedTemplateResult templateResult, ProjectCreateInformation projectCI)
+		static void RunTemplateActions (ProcessedTemplateResult templateResult)
 		{
 			foreach (var action in templateResult.Actions) {
-				if (!projectCI.ShouldCreate (action.CreateCondition))
-					continue;
-				IdeApp.Workbench.OpenDocument (Path.Combine (templateResult.ProjectBasePath, action.Filename));
+				action.Invoke ();
 			}
 		}
 

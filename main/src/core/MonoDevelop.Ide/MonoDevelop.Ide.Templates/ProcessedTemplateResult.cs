@@ -24,6 +24,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+using System;
 using System.Collections.Generic;
 using MonoDevelop.Projects;
 
@@ -36,7 +37,7 @@ namespace MonoDevelop.Ide.Templates
 
 		public abstract IEnumerable<IWorkspaceFileObject> WorkspaceItems { get; }
 
-		public abstract IEnumerable<ActionDescriptor> Actions { get; }
+		public abstract IEnumerable<Action> Actions { get; set; }
 
 		public abstract bool HasPackages ();
 

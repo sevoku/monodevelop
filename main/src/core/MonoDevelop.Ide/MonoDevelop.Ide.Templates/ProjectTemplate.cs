@@ -307,17 +307,6 @@ namespace MonoDevelop.Ide.Templates
 		{
 		}
 
-		//methods
-		public async Task<bool> OpenCreatedSolution ()
-		{
-			if (await IdeApp.Workspace.OpenWorkspaceItem (createdSolutionName)) {
-				foreach (ActionDescriptor action in actions)
-					IdeApp.Workbench.OpenDocument (Path.Combine (createdProjectInformation.ProjectBasePath, action.Filename));
-				return true;
-			}
-			return false;
-		}
-
 		public WorkspaceItem CreateWorkspaceItem (ProjectCreateInformation cInfo)
 		{
 			WorkspaceItemCreatedInformation workspaceItemInfo = solutionDescriptor.CreateEntry (cInfo, this.languagename);
