@@ -35,13 +35,15 @@ namespace MonoDevelop.Ide.Templates
 	{
 		readonly ProjectTemplate template;
 		readonly List<IWorkspaceFileObject> workspaceItems;
+		readonly List<Action> actions;
 
-		internal DefaultProcessedTemplateResult (ProjectTemplate template, IEnumerable<IWorkspaceFileObject> itemsCreated, string projectBasePath)
+		internal DefaultProcessedTemplateResult (ProjectTemplate template, IEnumerable<IWorkspaceFileObject> itemsCreated, string projectBasePath, IEnumerable<Action> actions)
 		{
 			this.template = template;
 			workspaceItems = itemsCreated.ToList ();
 			SolutionFileName = template.CreatedSolutionName;
 			ProjectBasePath = projectBasePath;
+			this.actions = actions.ToList ();
 		}
 
 		public override IEnumerable<IWorkspaceFileObject> WorkspaceItems {
@@ -59,7 +61,9 @@ namespace MonoDevelop.Ide.Templates
 			}
 		}
 
-		public override IEnumerable<Action> Actions { get; set; }
+		public override IEnumerable<Action> Actions { 
+			get { return actions; }
+		}
 	}
 }
 

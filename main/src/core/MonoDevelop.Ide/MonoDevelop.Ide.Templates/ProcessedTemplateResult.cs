@@ -37,7 +37,7 @@ namespace MonoDevelop.Ide.Templates
 
 		public abstract IEnumerable<IWorkspaceFileObject> WorkspaceItems { get; }
 
-		public abstract IEnumerable<Action> Actions { get; set; }
+		public abstract IEnumerable<Action> Actions { get; }
 
 		public abstract bool HasPackages ();
 

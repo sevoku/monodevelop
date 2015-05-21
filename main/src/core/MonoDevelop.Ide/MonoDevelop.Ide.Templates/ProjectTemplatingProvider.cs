@@ -79,9 +79,7 @@ namespace MonoDevelop.Ide.Templates
 					actionsList.Add (new Action (() => IdeApp.Workbench.OpenDocument (Path.Combine (cinfo.ProjectBasePath, action.Filename))));
 				}
 			}
-			return new DefaultProcessedTemplateResult (template.Template, newItems, cinfo.ProjectBasePath) {
-				Actions = actionsList
-			};
+			return new DefaultProcessedTemplateResult (template.Template, newItems, cinfo.ProjectBasePath, actionsList);
 		}
 
 		ProjectCreateInformation CreateProjectCreateInformation (NewProjectConfiguration config, SolutionFolder parentFolder)
