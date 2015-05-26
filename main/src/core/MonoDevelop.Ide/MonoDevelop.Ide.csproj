@@ -3486,6 +3486,11 @@
     <Compile Include="MonoDevelop.Ide.Editor.Extension\BraceMatchingResult.cs" />
     <Compile Include="MonoDevelop.Components.AutoTest.Operations\ChildrenOperation.cs" />
     <Compile Include="MonoDevelop.Ide.Templates\ActionDescriptor.cs" />
+    <Compile Include="MonoDevelop.Components.AutoTest.Results\NSObjectResult.cs" />
+    <Compile Include="MonoDevelop.Ide.TypeSystem\MonoDevelopTemporaryStorageServiceFactory.cs" />
+    <Compile Include="MonoDevelop.Ide.TypeSystem\WorkspaceId.cs" />
+    <Compile Include="MonoDevelop.Ide.TypeSystem\MonoDevelopPersistentStorageServiceFactory.cs" />
+    <Compile Include="MonoDevelop.Ide.TypeSystem\SolutionSizeTracker.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Makefile.am" />

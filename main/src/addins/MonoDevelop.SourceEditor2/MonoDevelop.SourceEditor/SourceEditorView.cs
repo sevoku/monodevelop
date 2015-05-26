@@ -500,7 +500,7 @@ namespace MonoDevelop.SourceEditor
 			if (TextEditor != null && TextEditor.IsComposited) {
 				/*if (messageBubbleHighlightPopupWindow != null)
 					messageBubbleHighlightPopupWindow.Destroy ();*/
-			/*	messageBubbleHighlightPopupWindow = new MessageBubbleHighlightPopupWindow (this, marker);
+			/*	messageBherbbleHighlightPopupWindow = new MessageBubbleHighlightPopupWindow (this, marker);
 				messageBubbleHighlightPopupWindow.Destroyed += delegate {
 					messageBubbleHighlightPopupWindow = null;
 				};
@@ -804,7 +804,6 @@ namespace MonoDevelop.SourceEditor
 			UpdateTasks (null, null);
 			widget.TextEditor.TextArea.SizeAllocated += HandleTextEditorVAdjustmentChanged;
 			if (didLoadCleanly) {
-				InformLoadComplete ();
 				widget.EnsureCorrectEolMarker (fileName);
 			}
 			
@@ -967,6 +966,7 @@ namespace MonoDevelop.SourceEditor
 			}
 
 			RemoveMarkerQueue ();
+			widget.Dispose ();
 		}
 
 		bool CheckReadOnly (int line)
@@ -1826,10 +1826,6 @@ namespace MonoDevelop.SourceEditor
 				return;
 			using (var undo = data.OpenUndoGroup ()) {
 				SetCompletionText (data, ctx, partialWord, completeWord, wordOffset);
-				var formatter = CodeFormatterService.GetFormatter (data.MimeType);
-				if (formatter != null && completeWord.IndexOfAny (new [] {' ', '\t', '{', '}'}) > 0 && formatter.SupportsOnTheFlyFormatting) {
-					formatter.OnTheFlyFormat (WorkbenchWindow.Document, ctx.TriggerOffset, ctx.TriggerOffset + completeWord.Length);
-				}
 			}
 		}
 		
@@ -2657,6 +2653,8 @@ namespace MonoDevelop.SourceEditor
 
 		void ITextEditorImpl.SetFoldings (IEnumerable<IFoldSegment> foldings)
 		{
+			if (this.isDisposed)
+				return;
 			TextEditor.Document.UpdateFoldSegments (foldings.Cast<FoldSegment> ().ToList ());
 		}
 

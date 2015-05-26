@@ -456,7 +456,7 @@ namespace MonoDevelop.Projects
 			Assert.AreEqual ("Program7_test1.cs", p.Files[6].FilePath.FileName, "Item conditions are ignored");
 
 			var testRef = Path.Combine (dir, "MonoDevelop.Core.dll");
-			var asms = p.GetReferencedAssemblies (sol.Configurations [0].Selector).ToArray ();
+			var asms = (await p.GetReferencedAssemblies (sol.Configurations [0].Selector)).ToArray ();
 			Assert.IsTrue (asms.Contains (testRef));
 		}
 
@@ -914,6 +914,24 @@ namespace MonoDevelop.Projects
 		}
 
 		[Test]
+		public async Task LoadProjectWithWildcardsAndExcludes ()
+		{
+			string projFile = Util.GetSampleProject ("console-project-with-wildcards", "ConsoleProject-with-excludes.csproj");
+
+			var p = await Services.ProjectService.ReadSolutionItem (Util.GetMonitor (), projFile);
+			Assert.IsInstanceOf<Project> (p);
+			var mp = (Project) p;
+			var files = mp.Files.Select (f => f.FilePath.FileName).OrderBy(f => f).ToArray ();
+			Assert.AreEqual(new string[] {
+				"Data2.cs",
+				"p1.txt",
+				"p4.txt",
+				"p5.txt",
+				"text3-1.txt",
+			}, files);
+		}
+
+		[Test]
 		public async Task SaveProjectWithWildcards ()
 		{
 			string projFile = Util.GetSampleProject ("console-project-with-wildcards", "ConsoleProject.csproj");
@@ -1250,12 +1268,70 @@ namespace MonoDevelop.Projects
 			}
 		}
 
-/*		[Test]
-		public async Task RunTargetInMemory ()
+		[Test]
+		public async Task RunTarget ()
 		{
-			Solution sol = TestProjectsChecks.CreateConsoleSolution ("console-project-msbuild");
+			string projFile = Util.GetSampleProject ("msbuild-tests", "project-with-custom-target.csproj");
+			var p = (Project) await Services.ProjectService.ReadSolutionItem (Util.GetMonitor (), projFile);
 
-		}*/
+			var ctx = new TargetEvaluationContext ();
+			ctx.GlobalProperties.SetValue ("TestProp", "has");
+			ctx.PropertiesToEvaluate.Add ("GenProp");
+			ctx.PropertiesToEvaluate.Add ("AssemblyName");
+			ctx.ItemsToEvaluate.Add ("GenItem");
+			var res = await p.RunTarget (Util.GetMonitor (), "Test", p.Configurations [0].Selector, ctx);
+
+			Assert.AreEqual (1, res.BuildResult.Errors.Count);
+			Assert.AreEqual ("Something failed: has foo bar", res.BuildResult.Errors [0].ErrorText);
+
+			// Verify that properties are returned
+
+			Assert.AreEqual ("ConsoleProject", res.Properties.GetValue ("AssemblyName"));
+			Assert.AreEqual ("foo", res.Properties.GetValue ("GenProp"));
+
+			// Verify that items are returned
+
+			var items = res.Items.ToArray ();
+			Assert.AreEqual (1, items.Length);
+			Assert.AreEqual ("bar", items [0].Include);
+			Assert.AreEqual ("Hello", items [0].Metadata.GetValue ("MyMetadata"));
+        }
+
+		[Test]
+		public async Task BuildWithCustomProps ()
+		{
+			string projFile = Util.GetSampleProject ("msbuild-tests", "project-with-custom-build-target.csproj");
+			var p = (Project) await Services.ProjectService.ReadSolutionItem (Util.GetMonitor (), projFile);
+
+			var ctx = new ProjectOperationContext ();
+			ctx.GlobalProperties.SetValue ("TestProp", "foo");
+			var res = await p.Build (Util.GetMonitor (), p.Configurations [0].Selector, ctx);
+
+			Assert.AreEqual (1, res.Errors.Count);
+			Assert.AreEqual ("Something failed: foo", res.Errors [0].ErrorText);
+		}
+
+		[Test]
+		public async Task CopyConfiguration ()
+		{
+			string solFile = Util.GetSampleProject ("console-project", "ConsoleProject.sln");
+
+			Solution sol = (Solution) await Services.ProjectService.ReadWorkspaceItem (Util.GetMonitor (), solFile);
+			Project p = (Project) sol.Items [0];
+
+			var conf = p.Configurations.OfType<ProjectConfiguration> ().FirstOrDefault (c => c.Name == "Debug");
+			conf.Properties.SetValue ("Foo", "Bar");
+
+			var newConf = p.CreateConfiguration ("Test");
+			newConf.CopyFrom (conf);
+			p.Configurations.Add (newConf);
+
+			await p.SaveAsync (Util.GetMonitor ());
+
+			var refXml = Util.ToSystemEndings (File.ReadAllText (p.FileName + ".config-copied"));
+			var savedXml = File.ReadAllText (p.FileName);
+			Assert.AreEqual (refXml, savedXml);
+		}
 	}
 
 	class MyProjectTypeNode: ProjectTypeNode

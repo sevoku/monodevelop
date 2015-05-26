@@ -423,18 +423,26 @@ namespace MonoDevelop.Ide.Editor
 			SetSelection (LocationToOffset (anchor), LocationToOffset (lead));
 		}
 
-		public void SetCaretLocation (DocumentLocation location, bool usePulseAnimation = false)
+		public void SetCaretLocation (DocumentLocation location, bool usePulseAnimation = false, bool centerCaret = true)
 		{
 			CaretLocation = location;
-			ScrollTo (CaretLocation);
+			if (centerCaret) {
+				CenterTo (CaretLocation);
+			} else {
+				ScrollTo (CaretLocation);
+			}
 			if (usePulseAnimation)
 				StartCaretPulseAnimation ();
 		}
 
-		public void SetCaretLocation (int line, int col, bool usePulseAnimation = false)
+		public void SetCaretLocation (int line, int col, bool usePulseAnimation = false, bool centerCaret = true)
 		{
 			CaretLocation = new DocumentLocation (line, col);
-			CenterTo (CaretLocation);
+			if (centerCaret) {
+				CenterTo (CaretLocation);
+			} else {
+				ScrollTo (CaretLocation);
+			}
 			if (usePulseAnimation)
 				StartCaretPulseAnimation ();
 		}
@@ -828,10 +836,10 @@ namespace MonoDevelop.Ide.Editor
 
 		protected override void Dispose (bool disposing)
 		{
-			if (disposing) {
-				DetachExtensionChain ();
-				textEditorImpl.Dispose ();
-			}
+			DetachExtensionChain ();
+			FileNameChanged -= TextEditor_FileNameChanged;
+			MimeTypeChanged -= TextEditor_MimeTypeChanged;
+			textEditorImpl.Dispose ();
 			base.Dispose (disposing);
 		}
 
@@ -887,17 +895,22 @@ namespace MonoDevelop.Ide.Editor
 			ExtensionContext = AddinManager.CreateExtensionContext ();
 			ExtensionContext.RegisterCondition ("FileType", fileTypeCondition);
 
-			FileNameChanged += delegate {
-				fileTypeCondition.SetFileName (FileName);
-			};
+			FileNameChanged += TextEditor_FileNameChanged;
+			MimeTypeChanged += TextEditor_MimeTypeChanged;
+		}
 
-			MimeTypeChanged += delegate {
-				textEditorImpl.ClearTooltipProviders ();
-				foreach (var extensionNode in allProviders) {
-					if (extensionNode.IsValidFor (MimeType))
-						textEditorImpl.AddTooltipProvider ((TooltipProvider)extensionNode.CreateInstance ());
-				}
-			};
+		void TextEditor_FileNameChanged (object sender, EventArgs e)
+		{
+			fileTypeCondition.SetFileName (FileName);
+		}
+
+		void TextEditor_MimeTypeChanged (object sender, EventArgs e)
+		{
+			textEditorImpl.ClearTooltipProviders ();
+			foreach (var extensionNode in allProviders) {
+				if (extensionNode.IsValidFor (MimeType))
+					textEditorImpl.AddTooltipProvider ((TooltipProvider)extensionNode.CreateInstance ());
+			}
 		}
 
 		TextEditorViewContent viewContent;
