@@ -23,6 +23,7 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
+
 using System;
 using System.Composition;
 using System.IO;
@@ -32,6 +33,9 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Host;
 using Microsoft.CodeAnalysis.Host.Mef;
 using MonoDevelop.Core;
+using System.Text;
+using System.Collections.Generic;
+using System.Security.Cryptography;
 
 namespace MonoDevelop.Ide.TypeSystem
 {
@@ -88,6 +92,7 @@ namespace MonoDevelop.Ide.TypeSystem
 
 		class PersistentStorageService : IPersistentStorageService
 		{
+			Dictionary<SolutionId, IPersistentStorage> storages = new Dictionary<SolutionId, IPersistentStorage> ();
 			/// <summary>
 			/// threshold to start to use esent (50MB)
 			/// </summary>
@@ -110,24 +115,35 @@ namespace MonoDevelop.Ide.TypeSystem
 				return GetStorage(solution, workingFolderPath);
 			}
 
+			object storageLock = new object ();
+
 			IPersistentStorage GetStorage (Solution solution, string workingFolderPath)
 			{
-				if (!SolutionSizeAboveThreshold(solution))
-					return NoOpPersistentStorageInstance;
-				return new PersistentStorage (workingFolderPath);
+				lock (storageLock) {
+					IPersistentStorage storage;
+					if (storages.TryGetValue (solution.Id, out storage))
+						return storage;
+					if (!SolutionSizeAboveThreshold (solution)) {
+						storage = NoOpPersistentStorageInstance;
+					} else {
+						storage = new PersistentStorage (workingFolderPath);
+					}
+					storages.Add (solution.Id, storage);
+					return storage;
+				}
 			}
 
 			bool SolutionSizeAboveThreshold(Solution solution)
 			{
 				var size = SolutionSizeTracker.GetSolutionSizeAsync(solution.Workspace, solution.Id, CancellationToken.None).Result;
-				Console.WriteLine ("solution size : "+ size +"/" +(size > SolutionSizeThreshold));
 				return size > SolutionSizeThreshold;
 			}
 		}
 
-		class PersistentStorage: IPersistentStorage
+		class PersistentStorage : IPersistentStorage
 		{
 			static Task<Stream> defaultStreamTask = Task.FromResult (default(Stream));
+			static MD5 md5 = MD5.Create (); 
 
 			string workingFolderPath;
 
@@ -140,9 +156,36 @@ namespace MonoDevelop.Ide.TypeSystem
 			{
 			}
 
+			public static string GetMD5 (string data)
+			{
+				var result = new StringBuilder();
+				foreach (var b in md5.ComputeHash (Encoding.ASCII.GetBytes (data))) {
+					result.Append(b.ToString("X2"));
+
+				}
+				return result.ToString();
+			}
+
+			const string dataFileExtension = ".dat";
+
+			static string GetFileName (string name)
+			{
+				return GetMD5 (name) + dataFileExtension;
+			}
+
+			static string GetDocumentDataFileName (Document document, string name)
+			{
+				return GetMD5 (document.FilePath + "_" + name) + dataFileExtension;
+			}
+
+			static string GetProjectDataFileName (Project project, string name)
+			{
+				return GetMD5 (project.FilePath + "_" + name) + dataFileExtension;
+			}
+
 			public Task<Stream> ReadStreamAsync(Document document, string name, CancellationToken cancellationToken = default(CancellationToken))
 			{
-				string fileName = Path.Combine (workingFolderPath, document.Id.Id.ToString () + name);
+				string fileName = Path.Combine (workingFolderPath, GetDocumentDataFileName (document, name));
 				if (!File.Exists (fileName))
 					return defaultStreamTask;
 				return Task.FromResult ((Stream)File.OpenRead (fileName));
@@ -150,15 +193,14 @@ namespace MonoDevelop.Ide.TypeSystem
 
 			public Task<Stream> ReadStreamAsync(Project project, string name, CancellationToken cancellationToken = default(CancellationToken))
 			{
-				string fileName = Path.Combine (workingFolderPath, project.Id.Id.ToString () + name);
+				string fileName = Path.Combine (workingFolderPath, GetProjectDataFileName (project, name));
 				if (!File.Exists (fileName))
 					return defaultStreamTask;
 				return Task.FromResult ((Stream)File.OpenRead (fileName));
 			}
-
 			public Task<Stream> ReadStreamAsync(string name, CancellationToken cancellationToken = default(CancellationToken))
 			{
-				string fileName = Path.Combine (workingFolderPath, name);
+				string fileName = Path.Combine (workingFolderPath, GetFileName (name));
 				if (!File.Exists (fileName))
 					return defaultStreamTask;
 				return Task.FromResult ((Stream)File.OpenRead (fileName));
@@ -166,7 +208,7 @@ namespace MonoDevelop.Ide.TypeSystem
 
 			public async Task<bool> WriteStreamAsync(Document document, string name, Stream stream, CancellationToken cancellationToken = default(CancellationToken))
 			{
-				string fileName = Path.Combine (workingFolderPath, document.Id.Id.ToString () + name);
+				string fileName = Path.Combine (workingFolderPath, GetDocumentDataFileName (document, name));
 				using (var newStream = File.OpenWrite (fileName)) {
 					await stream.CopyToAsync (newStream);
 				}
@@ -175,7 +217,7 @@ namespace MonoDevelop.Ide.TypeSystem
 
 			public async Task<bool> WriteStreamAsync(Project project, string name, Stream stream, CancellationToken cancellationToken = default(CancellationToken))
 			{
-				string fileName = Path.Combine (workingFolderPath, project.Id.Id.ToString () + name);
+				string fileName = Path.Combine (workingFolderPath, GetProjectDataFileName (project, name));
 				using (var newStream = File.OpenWrite (fileName)) {
 					await stream.CopyToAsync (newStream);
 				}
@@ -184,7 +226,7 @@ namespace MonoDevelop.Ide.TypeSystem
 
 			public async Task<bool> WriteStreamAsync(string name, Stream stream, CancellationToken cancellationToken = default(CancellationToken))
 			{
-				string fileName = Path.Combine (workingFolderPath, name);
+				string fileName = Path.Combine (workingFolderPath, GetFileName (name));
 				using (var newStream = File.OpenWrite (fileName)) {
 					await stream.CopyToAsync (newStream);
 				}

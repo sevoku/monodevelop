@@ -54,7 +54,7 @@ namespace Mono.TextEditor
 		protected GutterMargin     gutterMargin;
 		protected FoldMarkerMargin foldMarkerMargin;
 		protected TextViewMargin   textViewMargin;
-		
+
 		DocumentLine longestLine      = null;
 		double      longestLineWidth = -1;
 		
@@ -811,7 +811,13 @@ namespace Mono.TextEditor
 				if (margin is IDisposable)
 					((IDisposable)margin).Dispose ();
 			}
-			this.margins = null;
+			iconMargin = null;
+			actionMargin = null;
+			foldMarkerMargin = null;
+			gutterMargin = null;
+			textViewMargin = null;
+			margins = null;
+			oldMargin = null;
 			textEditorData.ClearTooltipProviders ();
 
 			textEditorData.RecenterEditor -= TextEditorData_RecenterEditor;
@@ -1512,46 +1518,43 @@ namespace Mono.TextEditor
 
 			public void Run (object sender, EventArgs e)
 			{
-				GLib.Timeout.Add (97, delegate {
-					if (editor.IsDisposed)
-						return false;
-					editor.TextArea.SizeAllocated -= Run;
-					editor.TextArea.SetAdjustments (editor.Allocation);
-					//			Adjustment adj;
-					//adj.Upper
-					if (editor.TextArea.textEditorData.VAdjustment.Upper < editor.TextArea.Allocation.Height) {
-						editor.TextArea.textEditorData.VAdjustment.Value = 0;
-						return false;
-					}
+				if (editor.IsDisposed)
+					return;
+				editor.TextArea.SizeAllocated -= Run;
+				editor.TextArea.SetAdjustments (editor.Allocation);
+				//			Adjustment adj;
+				//adj.Upper
+				if (editor.TextArea.textEditorData.VAdjustment.Upper < editor.TextArea.Allocation.Height) {
+					editor.TextArea.textEditorData.VAdjustment.Value = 0;
+					return;
+				}
 
-					//	int yMargin = 1 * this.LineHeight;
-					double caretPosition = editor.TextArea.LineToY (p.Line);
-					caretPosition -= editor.TextArea.textEditorData.VAdjustment.PageSize / 2;
+				//	int yMargin = 1 * this.LineHeight;
+				double caretPosition = editor.TextArea.LineToY (p.Line);
+				caretPosition -= editor.TextArea.textEditorData.VAdjustment.PageSize / 2;
 
-					// Make sure the caret position is inside the bounds. This avoids an unnecessary bump of the scrollview.
-					// The adjustment does this check, but does it after assigning the value, so the value may be out of bounds for a while.
-					if (caretPosition + editor.TextArea.textEditorData.VAdjustment.PageSize > editor.TextArea.textEditorData.VAdjustment.Upper)
-						caretPosition = editor.TextArea.textEditorData.VAdjustment.Upper - editor.TextArea.textEditorData.VAdjustment.PageSize;
+				// Make sure the caret position is inside the bounds. This avoids an unnecessary bump of the scrollview.
+				// The adjustment does this check, but does it after assigning the value, so the value may be out of bounds for a while.
+				if (caretPosition + editor.TextArea.textEditorData.VAdjustment.PageSize > editor.TextArea.textEditorData.VAdjustment.Upper)
+					caretPosition = editor.TextArea.textEditorData.VAdjustment.Upper - editor.TextArea.textEditorData.VAdjustment.PageSize;
 
-					editor.TextArea.textEditorData.VAdjustment.Value = caretPosition;
+				editor.TextArea.textEditorData.VAdjustment.Value = caretPosition;
 
-					if (editor.TextArea.textEditorData.HAdjustment.Upper < editor.TextArea.Allocation.Width) {
+				if (editor.TextArea.textEditorData.HAdjustment.Upper < editor.TextArea.Allocation.Width) {
+					editor.TextArea.textEditorData.HAdjustment.Value = 0;
+				} else {
+					double caretX = editor.TextArea.ColumnToX (editor.TextArea.Document.GetLine (p.Line), p.Column);
+					double textWith = editor.TextArea.Allocation.Width - editor.TextArea.textViewMargin.XOffset;
+					if (caretX < editor.TextArea.textEditorData.HAdjustment.Upper) {
 						editor.TextArea.textEditorData.HAdjustment.Value = 0;
-					} else {
-						double caretX = editor.TextArea.ColumnToX (editor.TextArea.Document.GetLine (p.Line), p.Column);
-						double textWith = editor.TextArea.Allocation.Width - editor.TextArea.textViewMargin.XOffset;
-						if (caretX < editor.TextArea.textEditorData.HAdjustment.Upper) {
-							editor.TextArea.textEditorData.HAdjustment.Value = 0;
-						} else if (editor.TextArea.textEditorData.HAdjustment.Value > caretX) {
-							editor.TextArea.textEditorData.HAdjustment.Value = System.Math.Max (0, caretX - editor.TextArea.textEditorData.HAdjustment.Upper / 2);
-						} else if (editor.TextArea.textEditorData.HAdjustment.Value + textWith < caretX + editor.TextArea.TextViewMargin.CharWidth) {
-							double adjustment = System.Math.Max (0, caretX - textWith + editor.TextArea.TextViewMargin.CharWidth);
-							editor.TextArea.textEditorData.HAdjustment.Value = adjustment;
-						}
+					} else if (editor.TextArea.textEditorData.HAdjustment.Value > caretX) {
+						editor.TextArea.textEditorData.HAdjustment.Value = System.Math.Max (0, caretX - editor.TextArea.textEditorData.HAdjustment.Upper / 2);
+					} else if (editor.TextArea.textEditorData.HAdjustment.Value + textWith < caretX + editor.TextArea.TextViewMargin.CharWidth) {
+						double adjustment = System.Math.Max (0, caretX - textWith + editor.TextArea.TextViewMargin.CharWidth);
+						editor.TextArea.textEditorData.HAdjustment.Value = adjustment;
 					}
-					editor.TextArea.QueueDraw ();
-					return false;
-				});
+				}
+				editor.TextArea.QueueDraw ();
 			}
 		}
 
