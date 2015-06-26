@@ -87,6 +87,7 @@ namespace MonoDevelop.Ide.Projects
 		public SolutionFolder ParentFolder { get; set; }
 		public string BasePath { get; set; }
 		public string SelectedTemplateId { get; set; }
+		public Workspace ParentWorkspace { get; set; }
 
 		string DefaultSelectedCategoryPath {
 			get {
@@ -128,6 +129,9 @@ namespace MonoDevelop.Ide.Projects
 
 			if (disposeNewItem)
 				DisposeExistingNewItems ();
+
+			wizardProvider.Dispose ();
+			imageProvider.Dispose ();
 
 			return IsNewItemCreated;
 		}
@@ -243,6 +247,11 @@ namespace MonoDevelop.Ide.Projects
 
 		public FinalProjectConfigurationPage FinalConfiguration {
 			get { return finalConfigurationPage; }
+		}
+
+		public IEnumerable<ProjectConfigurationControl> GetFinalPageControls ()
+		{
+			return wizardProvider.GetFinalPageControls ();
 		}
 
 		void LoadTemplateCategories ()
@@ -524,8 +533,6 @@ namespace MonoDevelop.Ide.Projects
 			IsNewItemCreated = true;
 			UpdateDefaultSettings ();
 			dialog.CloseDialog ();
-			wizardProvider.Dispose ();
-			imageProvider.Dispose ();
 		}
 
 		public WizardPage CurrentWizardPage {
@@ -553,6 +560,11 @@ namespace MonoDevelop.Ide.Projects
 
 			if (ParentFolder != null && ParentFolder.ParentSolution.FindProjectByName (projectConfiguration.ProjectName) != null) {
 				MessageService.ShowError (GettextCatalog.GetString ("A Project with that name is already in your Project Space"));
+				return false;
+			}
+
+			if (ParentWorkspace != null && SolutionAlreadyExistsInParentWorkspace ()) {
+				MessageService.ShowError (GettextCatalog.GetString ("A solution with that filename is already in your workspace"));
 				return false;
 			}
 
@@ -590,6 +602,16 @@ namespace MonoDevelop.Ide.Projects
 			}	
 			processedTemplate = result;
 			return true;
+		}
+
+		bool SolutionAlreadyExistsInParentWorkspace ()
+		{
+			if (finalConfigurationPage.IsWorkspace)
+				return false;
+
+			string solutionFileName = Path.Combine (projectConfiguration.SolutionLocation, finalConfigurationPage.SolutionFileName);
+			return ParentWorkspace.GetChildren ().OfType<Solution> ()
+				.Any (solution => solution.FileName == solutionFileName);
 		}
 
 		void DisposeExistingNewItems ()

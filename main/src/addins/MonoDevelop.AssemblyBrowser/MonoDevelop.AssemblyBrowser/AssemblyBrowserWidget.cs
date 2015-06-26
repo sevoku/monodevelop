@@ -73,6 +73,9 @@ namespace MonoDevelop.AssemblyBrowser
 			get {
 				return TreeView.PublicApiOnly;
 			}
+			set {
+				comboboxVisibilty.Active = value ? 0 : 1;
+			}
 		}
 		
 		DocumentationPanel documentationPanel = new DocumentationPanel ();
@@ -836,6 +839,7 @@ namespace MonoDevelop.AssemblyBrowser
 			} finally {
 				Gtk.Application.Invoke (delegate {
 					IdeApp.Workbench.StatusBar.EndProgress ();
+					IdeApp.Workbench.StatusBar.ShowReady ();
 				});
 			}
 		}
@@ -1294,6 +1298,9 @@ namespace MonoDevelop.AssemblyBrowser
 				return;
 			
 			ITreeNavigator nav = TreeView.GetRootNode ();
+			if (nav == null)
+				return;
+			
 			do {
 				if (nav.DataItem == cu) {
 					nav.ExpandToNode ();
@@ -1479,7 +1486,9 @@ namespace MonoDevelop.AssemblyBrowser
 				// Select the project.
 				if (selectReference) {
 					ITreeNavigator navigator = TreeView.GetNodeAtObject (project);
-					navigator.Selected = true;
+
+					if (navigator != null)
+						navigator.Selected = true;
 				}
 
 				return;

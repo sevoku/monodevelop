@@ -31,6 +31,7 @@ using System.Runtime.Serialization.Formatters.Binary;
 using System.IO;
 using System.Threading;
 using System.Collections.Generic;
+using System.Xml;
 using MonoDevelop.Core.Instrumentation;
 using MonoDevelop.Components.Commands;
 
@@ -82,7 +83,7 @@ namespace MonoDevelop.Components.AutoTest
 
 			process = Process.Start (pi);
 
-			if (!waitEvent.WaitOne (15000)) {
+			if (!waitEvent.WaitOne (120000)) {
 				try {
 					process.Kill ();
 				} catch { }
@@ -120,6 +121,18 @@ namespace MonoDevelop.Components.AutoTest
 				} catch (InvalidOperationException invalidExp) {
 					Console.WriteLine ("Process has already exited");
 				}
+		}
+
+		public AutoTestSession.MemoryStats MemoryStats {
+			get {
+				return session.GetMemoryStats ();
+			}
+		}
+
+		public string[] CounterStats {
+			get {
+				return session.GetCounterStats ();
+			}
 		}
 
 		public void ExitApp ()
@@ -211,7 +224,9 @@ namespace MonoDevelop.Components.AutoTest
 
 		void ClearEventQueue ()
 		{
-			eventQueue.Clear ();
+			lock (eventQueue) {
+				eventQueue.Clear ();
+			}
 		}
 
 		void IAutoTestClient.Connect (AutoTestSession session)
@@ -266,11 +281,11 @@ namespace MonoDevelop.Components.AutoTest
 			return false;
 		}
 
-		public bool ClickElement (Func<AppQuery, AppQuery> query)
+		public bool ClickElement (Func<AppQuery, AppQuery> query, bool wait = true)
 		{
 			AppResult[] results = Query (query);
 			if (results.Length > 0) {
-				return session.Click (results [0]);
+				return session.Click (results [0], wait);
 			}
 
 			return false;
@@ -291,6 +306,36 @@ namespace MonoDevelop.Components.AutoTest
 			return false;
 		}
 
+		public bool TypeKey (Func<AppQuery, AppQuery> query, char key, string modifiers)
+		{
+			AppResult[] results = Query (query);
+			if (results.Length > 0) {
+				bool result = session.Select (results [0]);
+				if (!result) {
+					return false;
+				}
+
+				return session.TypeKey (results [0], key, modifiers);
+			}
+
+			return false;
+		}
+
+		public bool TypeKey (Func<AppQuery, AppQuery> query, string keyString, string modifiers)
+		{
+			AppResult[] results = Query (query);
+			if (results.Length > 0) {
+				bool result = session.Select (results [0]);
+				if (!result) {
+					return false;
+				}
+
+				return session.TypeKey (results [0], keyString, modifiers);
+			}
+
+			return false;
+		}
+
 		// FIXME: Not convinced this is the best name
 		public bool ToggleElement (Func<AppQuery, AppQuery> query, bool active)
 		{
@@ -302,11 +347,28 @@ namespace MonoDevelop.Components.AutoTest
 			return session.Toggle (results [0], active);
 		}
 
+		public void Flash (Func<AppQuery, AppQuery> query)
+		{
+			AppResult[] results = Query (query);
+			foreach (var result in results) {
+				session.Flash (result);
+			}
+		}
+
 		public void RunAndWaitForTimer (Action action, string counterName, int timeout = 20000)
 		{
 			AutoTestSession.TimerCounterContext context = session.CreateNewTimerContext (counterName);
 			action ();
 			session.WaitForTimerContext (context);
+		}
+
+		public XmlDocument ResultsAsXml (AppResult[] results)
+		{
+			string xmlResults = session.ResultsAsXml (results);
+			XmlDocument document = new XmlDocument ();
+			document.LoadXml (xmlResults);
+
+			return document;
 		}
 	}
 

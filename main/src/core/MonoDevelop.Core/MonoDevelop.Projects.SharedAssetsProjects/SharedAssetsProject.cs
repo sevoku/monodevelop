@@ -78,22 +78,14 @@ namespace MonoDevelop.Projects.SharedAssetsProjects
 		{
 			base.OnReadProject (monitor, msproject);
 
-			var doc = msproject.Document;
-			string projitemsFile = null;
-			foreach (var no in doc.DocumentElement.ChildNodes) {
-				var im = no as XmlElement;
-				if (im != null && im.LocalName == "Import" && im.GetAttribute ("Label") == "Shared") {
-					projitemsFile = im.GetAttribute ("Project");
-					break;
-				}
-			}
-			if (projitemsFile == null)
+			var import = msproject.Imports.FirstOrDefault (im => im.Label == "Shared");
+			if (import == null)
 				return;
 
 			// TODO: load the type from msbuild
 			LanguageName = "C#";
 
-			projItemsPath = Path.Combine (Path.GetDirectoryName (msproject.FileName), projitemsFile);
+			projItemsPath = MSBuildProjectService.FromMSBuildPath (msproject.BaseDirectory, import.Project);
 
 			MSBuildProject p = new MSBuildProject (msproject.EngineManager);
 			p.Load (projItemsPath);
@@ -217,7 +209,7 @@ namespace MonoDevelop.Projects.SharedAssetsProjects
 
 		protected override Task<BuildResult> OnBuild (MonoDevelop.Core.ProgressMonitor monitor, ConfigurationSelector configuration, OperationContext operationContext)
 		{
-			return Task.FromResult (BuildResult.Success);
+			return Task.FromResult (BuildResult.CreateSuccess ());
 		}
 
 		protected override bool OnGetSupportsTarget (string target)

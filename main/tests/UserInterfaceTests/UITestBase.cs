@@ -28,16 +28,22 @@ using System.IO;
 using NUnit.Framework;
 using MonoDevelop.Components.AutoTest;
 using System;
+using System.Collections.Generic;
+using Newtonsoft.Json;
 
 namespace UserInterfaceTests
 {
 	[TestFixture]
 	public abstract class UITestBase
 	{
-		string projectScreenshotFolder;
+		string currentWorkingDirectory;
+		string testResultFolder;
+		string memoryUsageFolder;
+		string currentTestResultFolder;
+
 		int testScreenshotIndex;
 
-		public string ScreenshotsPath { get; private set; }
+		protected readonly List<string> FoldersToClean = new List<string> ();
 
 		public AutoTestClientSession Session {
 			get { return TestService.Session; }
@@ -50,70 +56,85 @@ namespace UserInterfaceTests
 		protected UITestBase (string mdBinPath)
 		{
 			MonoDevelopBinPath = mdBinPath;
-			InitializeScreenShotPath ();
+			currentWorkingDirectory = Directory.GetCurrentDirectory ();
+		}
+
+		[TestFixtureSetUp]
+		public virtual void FixtureSetup ()
+		{
+			testResultFolder = Path.Combine (currentWorkingDirectory, "TestResults");
+			memoryUsageFolder = Path.Combine (testResultFolder, "MemoryUsage");
+			if (!Directory.Exists (memoryUsageFolder))
+				Directory.CreateDirectory (memoryUsageFolder);
 		}
 
 		[SetUp]
 		public virtual void SetUp ()
 		{
-			Util.ClearTmpDir ();
+			SetupTestResultFolder (TestContext.CurrentContext.Test.FullName);
+			var currentXSIdeLog = Path.Combine (currentTestResultFolder,string.Format ("{0}.Ide.log", TestContext.CurrentContext.Test.FullName) );
+			Environment.SetEnvironmentVariable ("MONODEVELOP_LOG_FILE", currentXSIdeLog);
+			Environment.SetEnvironmentVariable ("MONODEVELOP_FILE_LOG_LEVEL", "UpToInfo");
 
-			TestService.StartSession (MonoDevelopBinPath);
+			var mdProfile = Util.CreateTmpDir ();
+			TestService.StartSession (MonoDevelopBinPath, mdProfile);
 			TestService.Session.DebugObject = new UITestDebug ();
+
+			FoldersToClean.Add (mdProfile);
 		}
 
 		[TearDown]
 		public virtual void Teardown ()
 		{
-			OnCleanUp ();
+			File.WriteAllText (Path.Combine (memoryUsageFolder, TestContext.CurrentContext.Test.FullName),
+			                   JsonConvert.SerializeObject (Session.MemoryStats, Formatting.Indented));
+
+			Ide.CloseAll ();
 			TestService.EndSession ();
-		}
 
-		void InitializeScreenShotPath ()
-		{
-			var pictureFolderName = Directory.GetCurrentDirectory ();
-			ScreenshotsPath = Path.Combine (pictureFolderName, "Screenshots", GetType ().Name);
-			if (Directory.Exists (ScreenshotsPath)) {
-				var lastAccess = Directory.GetLastAccessTime (ScreenshotsPath).ToString ("u").Replace (' ', '-').Replace (':', '-');
-				var newLocation = string.Format ("{0}-{1}", ScreenshotsPath, lastAccess);
-				Directory.Move (ScreenshotsPath, newLocation);
+			OnCleanUp ();
+			if (TestContext.CurrentContext.Result.Status == TestStatus.Passed) {
+				if (Directory.Exists (currentTestResultFolder))
+					Directory.Delete (currentTestResultFolder, true);
 			}
-
-			Directory.CreateDirectory (ScreenshotsPath);
 		}
 
-		protected void ScreenshotForTestSetup (string testName)
+		void SetupTestResultFolder (string testName)
 		{
 			testScreenshotIndex = 1;
-			projectScreenshotFolder = Path.Combine (ScreenshotsPath, testName);
-			if (Directory.Exists (projectScreenshotFolder))
-				Directory.Delete (projectScreenshotFolder, true);
-			Directory.CreateDirectory (projectScreenshotFolder);
+			currentTestResultFolder = Path.Combine (testResultFolder, testName);
+			if (Directory.Exists (currentTestResultFolder))
+				Directory.Delete (currentTestResultFolder, true);
+			Directory.CreateDirectory (currentTestResultFolder);
 		}
 
 		protected void TakeScreenShot (string stepName)
 		{
-			if (string.IsNullOrEmpty (projectScreenshotFolder))
-				throw new InvalidOperationException ("You need to initialize Screenshot functionality by calling 'ScreenshotForTestSetup (string testName)' first");
-
 			stepName = string.Format ("{0:D3}-{1}", testScreenshotIndex++, stepName);
-			var screenshotPath = Path.Combine (projectScreenshotFolder, stepName) + ".png";
+			var screenshotPath = Path.Combine (currentTestResultFolder, stepName) + ".png";
 			Session.TakeScreenshot (screenshotPath);
 		}
 
 		protected virtual void OnCleanUp ()
 		{
-			var actualSolutionDirectory = GetSolutionDirectory ();
-			Ide.CloseAll ();
-			try {
-				if (Directory.Exists (actualSolutionDirectory))
-					Directory.Delete (actualSolutionDirectory, true);
-			} catch (IOException) { }
+			foreach (var folder in FoldersToClean) {
+				try {
+					if (folder != null && Directory.Exists (folder))
+						Directory.Delete (folder, true);
+				} catch (IOException e) {
+					Console.WriteLine ("Cleanup failed\n" +e.ToString ());
+				}
+			}
 		}
 
 		protected string GetSolutionDirectory ()
 		{
-			return Session.GetGlobalValue ("MonoDevelop.Ide.IdeApp.ProjectOperations.CurrentSelectedSolution.RootFolder.BaseDirectory").ToString ();
+			try {
+				var dirObj = Session.GetGlobalValue ("MonoDevelop.Ide.IdeApp.ProjectOperations.CurrentSelectedSolution.RootFolder.BaseDirectory");
+			return dirObj != null ? dirObj.ToString () : null;
+			} catch (Exception) {
+				return null;
+			}
 		}
 	}
 }

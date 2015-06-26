@@ -34,10 +34,11 @@ using Microsoft.CodeAnalysis.Host.Mef;
 using Microsoft.CodeAnalysis.Text;
 using MonoDevelop.Core.Text;
 using System.Reflection;
+using MonoDevelop.Core;
 
 namespace MonoDevelop.Ide.TypeSystem
 {
-	[ExportWorkspaceServiceFactory(typeof(ITemporaryStorageService), ServiceLayer.Host), Shared]
+	[ExportWorkspaceServiceFactory (typeof (ITemporaryStorageService), ServiceLayer.Host), Shared]
 	sealed class MonoDevelopTemporaryStorageServiceFactory : IWorkspaceServiceFactory
 	{
 		static IWorkspaceServiceFactory microsoftFactory;
@@ -54,29 +55,111 @@ namespace MonoDevelop.Ide.TypeSystem
 			}
 		}
 
-		public IWorkspaceService CreateService(HostWorkspaceServices workspaceServices)
+		public IWorkspaceService CreateService (HostWorkspaceServices workspaceServices)
 		{
 			if (microsoftFactory != null)
 				return microsoftFactory.CreateService (workspaceServices);
-			return new TemporaryStorageService();
+			return new TemporaryStorageService ();
 		}
 
 		class TemporaryStorageService : ITemporaryStorageService
 		{
 			public ITemporaryStreamStorage CreateTemporaryStreamStorage (CancellationToken cancellationToken = default(CancellationToken))
 			{
-				return new StreamStorage();
+				return new StreamStorage ();
 			}
 
 			public ITemporaryTextStorage CreateTemporaryTextStorage (CancellationToken cancellationToken = default(CancellationToken))
 			{
-				return new TemporaryTextStorage();
+				return new TemporaryTextStorage ();
 			}
 		}
 
+		/*
+		sealed class StreamStorage : ITemporaryStreamStorage
+		{
+			MemoryStream _stream;
+
+			public void Dispose ()
+			{
+				_stream?.Dispose ();
+				_stream = null;
+			}
+
+			public Stream ReadStream (CancellationToken cancellationToken = default(CancellationToken))
+			{
+				if (_stream == null) {
+					throw new InvalidOperationException ();
+				}
+
+				_stream.Position = 0;
+				return _stream;
+			}
+
+			public Task<Stream> ReadStreamAsync (CancellationToken cancellationToken = default(CancellationToken))
+			{
+				if (_stream == null) {
+					throw new InvalidOperationException ();
+				}
+
+				_stream.Position = 0;
+				return Task.FromResult ((Stream)_stream);
+			}
+
+			public void WriteStream (Stream stream, CancellationToken cancellationToken = default(CancellationToken))
+			{
+				var newStream = new MemoryStream ();
+				stream.CopyTo (newStream);
+				_stream = newStream;
+			}
+
+			public async Task WriteStreamAsync (Stream stream, CancellationToken cancellationToken = default(CancellationToken))
+			{
+				var newStream = new MemoryStream ();
+				await stream.CopyToAsync (newStream).ConfigureAwait (false);
+				_stream = newStream;
+			}
+		}
+
+		sealed class TemporaryTextStorage : ITemporaryTextStorage
+		{
+			SourceText _sourceText;
+
+			public void Dispose ()
+			{
+				_sourceText = null;
+			}
+
+			public SourceText ReadText (CancellationToken cancellationToken = default(CancellationToken))
+			{
+				return _sourceText;
+			}
+
+			public Task<SourceText> ReadTextAsync (CancellationToken cancellationToken = default(CancellationToken))
+			{
+				return Task.FromResult (ReadText (cancellationToken));
+			}
+
+			public void WriteText (SourceText text, CancellationToken cancellationToken = default(CancellationToken))
+			{
+				// This is a trivial implementation, indeed. Note, however, that we retain a strong
+				// reference to the source text, which defeats the intent of RecoverableTextAndVersion, but
+				// is appropriate for this trivial implementation.
+				_sourceText = text;
+			}
+
+			public Task WriteTextAsync (SourceText text, CancellationToken cancellationToken = default(CancellationToken))
+			{
+				WriteText (text, cancellationToken);
+				return Task.FromResult (true);
+			}
+		}
+*/
 		class TemporaryTextStorage : ITemporaryTextStorage
 		{
 			string fileName;
+			Encoding encoding;
+			WeakReference<SourceText> sourceText;
 
 			public void Dispose()
 			{
@@ -89,8 +172,13 @@ namespace MonoDevelop.Ide.TypeSystem
 
 			public SourceText ReadText(CancellationToken cancellationToken = default(CancellationToken))
 			{
-				var src = StringTextSource.ReadFrom (fileName);
-				return SourceText.From(src.Text, src.Encoding);
+				SourceText result;
+				if (sourceText == null || !sourceText.TryGetTarget (out result)) {
+					var text = File.ReadAllText (fileName, encoding);
+					result = SourceText.From (text, encoding);
+					sourceText = new WeakReference<SourceText>(result);
+				}
+				return result;
 			}
 
 			public Task<SourceText> ReadTextAsync(CancellationToken cancellationToken = default(CancellationToken))
@@ -98,12 +186,20 @@ namespace MonoDevelop.Ide.TypeSystem
 				return Task.Run(delegate { return ReadText (cancellationToken); });
 			}
 
+			object writeTextLocker = new object ();
+
 			public void WriteText(SourceText text, CancellationToken cancellationToken = default(CancellationToken))
 			{
-				if (fileName == null)
-					this.fileName = Path.GetTempFileName ();
-				using (var writer = new StreamWriter(fileName, false, text.Encoding))
-					text.Write (writer, cancellationToken);
+				lock (writeTextLocker) {
+					if (fileName == null)
+						this.fileName = Path.GetTempFileName ();
+					string tmpPath = Path.Combine (Path.GetDirectoryName (fileName), ".#" + Path.GetFileName (fileName));
+					encoding = text.Encoding ?? Encoding.Default;
+					using (var writer = new StreamWriter (tmpPath, false, text.Encoding))
+						text.Write (writer, cancellationToken);
+					sourceText = new WeakReference<SourceText>(text);
+					FileService.SystemRename (tmpPath, fileName);
+				}
 			}
 
 			Task ITemporaryTextStorage.WriteTextAsync(SourceText text, CancellationToken cancellationToken)
@@ -117,6 +213,11 @@ namespace MonoDevelop.Ide.TypeSystem
 		class StreamStorage : ITemporaryStreamStorage
 		{
 			string fileName;
+
+			public StreamStorage ()
+			{
+					Console.WriteLine ("Create stream storage !!!");
+			}
 
 			public void Dispose()
 			{

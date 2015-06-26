@@ -265,7 +265,8 @@ namespace MonoDevelop.Ide.Gui
 		{
 			var window = tabControl.Toplevel as Gtk.Window;
 			if (window != null) {
-				window.Present ();
+				if (window is DockWindow)
+					DesktopService.GrabDesktopFocus (window);
 
 				#if MAC
 				AppKit.NSWindow nswindow = MonoDevelop.Components.Mac.GtkMacInterop.GetNSWindow (window);
@@ -483,7 +484,6 @@ namespace MonoDevelop.Ide.Gui
 				GLib.Source.Remove (present_timeout);
 			}
 
-			base.OnDestroyed ();
 			if (viewContents != null) {
 				foreach (IAttachableViewContent sv in SubViewContents) {
 					sv.Dispose ();
@@ -510,6 +510,7 @@ namespace MonoDevelop.Ide.Gui
 			commandHandler = null;
 			document = null;
 			extensionContext = null;
+			base.OnDestroyed ();
 		}
 		
 		#region lazy UI element creation

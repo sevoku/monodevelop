@@ -29,7 +29,7 @@ using Gtk;
 
 namespace MonoDevelop.Components.AutoTest.Results
 {
-	public class GtkTreeModelResult : AppResult
+	public class GtkTreeModelResult : GtkWidgetResult
 	{
 		Widget ParentWidget;
 		TreeModel TModel;
@@ -37,14 +37,14 @@ namespace MonoDevelop.Components.AutoTest.Results
 		TreeIter? resultIter;
 		string DesiredText;
 
-		public GtkTreeModelResult (Widget parent, TreeModel treeModel, int column)
+		public GtkTreeModelResult (Widget parent, TreeModel treeModel, int column) : base (parent)
 		{
 			ParentWidget = parent;
 			TModel = treeModel;
 			Column = column;
 		}
 
-		public GtkTreeModelResult (Widget parent, TreeModel treeModel, int column, TreeIter iter)
+		public GtkTreeModelResult (Widget parent, TreeModel treeModel, int column, TreeIter iter) : base (parent)
 		{
 			ParentWidget = parent;
 			TModel = treeModel;
@@ -103,6 +103,11 @@ namespace MonoDevelop.Components.AutoTest.Results
 
 		public override AppResult Property (string propertyName, object value)
 		{
+			if (resultIter != null && resultIter.HasValue) {
+				var objectToCompare = TModel.GetValue (resultIter.Value, Column);
+				return MatchProperty (propertyName, objectToCompare, value);
+			}
+
 			return null;
 		}
 
@@ -116,9 +121,36 @@ namespace MonoDevelop.Components.AutoTest.Results
 			TreeIter currentIter = (TreeIter) resultIter;
 
 			while (TModel.IterNext (ref currentIter)) {
-				newList.Add (new GtkTreeModelResult (ParentWidget, TModel, Column, currentIter));
+				newList.Add (new GtkTreeModelResult (ParentWidget, TModel, Column, currentIter) { SourceQuery = this.SourceQuery });
 			}
 
+			return newList;
+		}
+
+		public override List<AppResult> Children (bool recursive = true)
+		{
+			if (resultIter == null || !resultIter.HasValue) {
+				List<AppResult> children = new List<AppResult> ();
+				TModel.Foreach ((m, p, i) => {
+					children.Add (new GtkTreeModelResult (ParentWidget, TModel, Column, i));
+					return false;
+				});
+				return children;
+			}
+
+			TreeIter currentIter = (TreeIter) resultIter;
+			if (!TModel.IterHasChild (currentIter))
+			{
+				return null;
+			}
+
+			List<AppResult> newList = new List<AppResult> ();
+			for (int i = 0; i < TModel.IterNChildren (currentIter); i++) {
+				TreeIter childIter;
+				if (TModel.IterNthChild (out childIter, currentIter, i)) {
+					newList.Add (new GtkTreeModelResult (ParentWidget, TModel, Column, childIter));
+				}
+			}
 			return newList;
 		}
 
@@ -141,13 +173,23 @@ namespace MonoDevelop.Components.AutoTest.Results
 
 		public override bool Click ()
 		{
-			// FIXME: Same as select?
-			return true;
+			if (ParentWidget is TreeView && resultIter.HasValue) {
+				var path = TModel.GetPath (resultIter.Value);
+				var tree = ParentWidget as TreeView;
+				return tree.ExpandRow (path, true);
+			}
+
+			return false;
 		}
 
-		public override bool TypeKey (char key, string state)
+		public override bool TypeKey (char key, string state = "")
 		{
 			return false;
+		}
+
+		public override bool TypeKey (string keyString, string state = "")
+		{
+			throw new NotImplementedException ();
 		}
 
 		public override bool EnterText (string text)
@@ -158,6 +200,11 @@ namespace MonoDevelop.Components.AutoTest.Results
 		public override bool Toggle (bool active)
 		{
 			return false;
+		}
+
+		public override void Flash (System.Action completionHandler)
+		{
+			completionHandler ();
 		}
 	}
 }

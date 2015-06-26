@@ -1163,7 +1163,13 @@ namespace MonoDevelop.Projects
 		[Test]
 		public async Task ProjectSerializationRoundtrip (
 			[Values (
-				"broken-condition.csproj"
+				"broken-condition.csproj",
+				"empty-element.csproj",
+				"comment.csproj",
+				"text-spacing.csproj",
+				"inconsistent-line-endings.csproj",
+				"attribute-order.csproj",
+				"custom-namespace.csproj"
 				//"ICSharpCode.NRefactory.Cecil.csproj"
 			)]
 			string project)
@@ -1309,6 +1315,13 @@ namespace MonoDevelop.Projects
 
 			Assert.AreEqual (1, res.Errors.Count);
 			Assert.AreEqual ("Something failed: foo", res.Errors [0].ErrorText);
+
+			await p.Clean (Util.GetMonitor (), p.Configurations [0].Selector);
+			res = await p.Build (Util.GetMonitor (), p.Configurations [0].Selector, true);
+
+			// Check that the global property is reset
+			Assert.AreEqual (1, res.Errors.Count);
+			Assert.AreEqual ("Something failed: show", res.Errors [0].ErrorText);
 		}
 
 		[Test]
@@ -1331,6 +1344,16 @@ namespace MonoDevelop.Projects
 			var refXml = Util.ToSystemEndings (File.ReadAllText (p.FileName + ".config-copied"));
 			var savedXml = File.ReadAllText (p.FileName);
 			Assert.AreEqual (refXml, savedXml);
+		}
+
+		[Test]
+		public void DefaultMSBuildSupport ()
+		{
+			var project = Services.ProjectService.CreateDotNetProject ("C#");
+			bool byDefault, require;
+			MSBuildProjectService.CheckHandlerUsesMSBuildEngine (project, out byDefault, out require);
+			Assert.IsTrue (byDefault);
+			Assert.IsFalse (require);
 		}
 	}
 

@@ -25,15 +25,21 @@
 // THE SOFTWARE.
 
 using System;
+using System.Diagnostics;
+using System.IO;
 using System.Runtime.InteropServices;
 using System.Linq;
 using System.Reflection;
 using System.Threading;
+using System.Text;
 using System.Collections.Generic;
 using MonoDevelop.Core.Instrumentation;
 using MonoDevelop.Ide;
 using MonoDevelop.Ide.Tasks;
 using MonoDevelop.Components.Commands;
+using MonoDevelop.Core;
+
+using System.Xml;
 
 namespace MonoDevelop.Components.AutoTest
 {
@@ -59,6 +65,35 @@ namespace MonoDevelop.Components.AutoTest
 		public override object InitializeLifetimeService ()
 		{
 			return null;
+		}
+
+		[Serializable]
+		public struct MemoryStats {
+			public long PrivateMemory;
+			public long PeakVirtualMemory;
+			public long PagedSystemMemory;
+			public long PagedMemory;
+			public long NonPagedSystemMemory;
+		};
+
+		public MemoryStats GetMemoryStats ()
+		{
+			MemoryStats stats;
+			using (Process proc = Process.GetCurrentProcess ()) {
+				stats = new MemoryStats {
+					PrivateMemory = proc.PrivateMemorySize64,
+					PeakVirtualMemory = proc.PeakVirtualMemorySize64,
+					PagedSystemMemory = proc.PagedSystemMemorySize64,
+					PagedMemory = proc.PagedMemorySize64,
+					NonPagedSystemMemory = proc.NonpagedSystemMemorySize64
+				};
+				return stats;
+			}
+		}
+
+		public string[] GetCounterStats ()
+		{
+			return Counters.CounterReport ();
 		}
 
 		public void ExecuteCommand (object cmd, object dataItem = null, CommandSource source = CommandSource.Unknown)
@@ -89,7 +124,7 @@ namespace MonoDevelop.Components.AutoTest
 				}
 			});
 			if (!syncEvent.WaitOne (20000))
-				throw new Exception ("Timeout while executing synchronized call");
+				throw new TimeoutException ("Timeout while executing synchronized call");
 			if (error != null)
 				throw error;
 			return safe ? SafeObject (res) : res;
@@ -265,8 +300,16 @@ namespace MonoDevelop.Components.AutoTest
 			return query;
 		}
 
-		public void ExecuteOnIdleAndWait (Action idleFunc, int timeout = 20000)
+		public void ExecuteOnIdle (Action idleFunc, bool wait = true, int timeout = 20000)
 		{
+			if (wait == false) {
+				GLib.Idle.Add (() => {
+					idleFunc ();
+					return false;
+				});
+				return;
+			}
+
 			syncEvent.Reset ();
 			GLib.Idle.Add (() => {
 				idleFunc ();
@@ -275,7 +318,7 @@ namespace MonoDevelop.Components.AutoTest
 			});
 
 			if (!syncEvent.WaitOne (timeout)) {
-				throw new Exception ("Timeout while executing ExecuteOnIdleAndWait");
+				throw new TimeoutException ("Timeout while executing ExecuteOnIdleAndWait");
 			}
 		}
 
@@ -296,9 +339,13 @@ namespace MonoDevelop.Components.AutoTest
 		{
 			AppResult[] resultSet = null;
 
-			ExecuteOnIdleAndWait (() => {
-				resultSet = ExecuteQueryNoWait (query);
-			});
+			try {
+				ExecuteOnIdle (() => {
+					resultSet = ExecuteQueryNoWait (query);
+				});
+			} catch (TimeoutException e) {
+				throw new TimeoutException (string.Format ("Timeout while executing ExecuteQuery: {0}", query), e);
+			}
 
 			return resultSet;
 		}
@@ -322,7 +369,7 @@ namespace MonoDevelop.Components.AutoTest
 			});
 
 			if (!syncEvent.WaitOne (timeout)) {
-				throw new Exception (String.Format ("Timeout while executing WaitForElement: {0}", query));
+				throw new TimeoutException (String.Format ("Timeout while executing WaitForElement: {0}", query));
 			}
 
 			return resultSet;
@@ -346,7 +393,7 @@ namespace MonoDevelop.Components.AutoTest
 			});
 
 			if (!syncEvent.WaitOne (timeout)) {
-				throw new Exception (String.Format ("Timeout while executing WaitForNoElement: {0}", query));
+				throw new TimeoutException (String.Format ("Timeout while executing WaitForNoElement: {0}", query));
 			}
 		}
 
@@ -393,34 +440,68 @@ namespace MonoDevelop.Components.AutoTest
 				Thread.Sleep (pollStep);
 			} while (timeout > 0);
 
-			throw new Exception ("Timed out waiting for event");
+			throw new TimeoutException ("Timed out waiting for event");
 		}
 
 		public bool Select (AppResult result)
 		{
 			bool success = false;
 
-			ExecuteOnIdleAndWait (() => {
-				success = result.Select ();
-			});
+			try {
+				ExecuteOnIdle (() => {
+					success = result.Select ();
+				});
+			} catch (TimeoutException e) {
+				ThrowOperationTimeoutException ("Select", result.SourceQuery, result, e);
+			}
 
 			return success;
 		}
 
-		public bool Click (AppResult result)
+		public bool Click (AppResult result, bool wait = true)
 		{
 			bool success = false;
 
-			ExecuteOnIdleAndWait (() => {
-				success = result.Click ();
-			});
+			try {
+				ExecuteOnIdle (() => {
+					success = result.Click ();
+				}, wait);
+			} catch (TimeoutException e) {
+				ThrowOperationTimeoutException ("Click", result.SourceQuery, result, e);
+			}
 
 			return success;
 		}
 
 		public bool EnterText (AppResult result, string text)
 		{
-			ExecuteOnIdleAndWait (() => result.EnterText (text));
+			try {
+				ExecuteOnIdle (() => result.EnterText (text));
+			} catch (TimeoutException e) {
+				ThrowOperationTimeoutException ("EnterText", result.SourceQuery, result, e);
+			}
+
+			return true;
+		}
+
+		public bool TypeKey (AppResult result, char key, string modifiers)
+		{
+			try {
+				ExecuteOnIdle (() => result.TypeKey (key, modifiers));
+			} catch (TimeoutException e) {
+				ThrowOperationTimeoutException ("TypeKey", result.SourceQuery, result, e);
+			}
+
+			return true;
+		}
+
+		public bool TypeKey (AppResult result, string keyString, string modifiers)
+		{
+			try {
+				ExecuteOnIdle (() => result.TypeKey (keyString, modifiers));
+			} catch (TimeoutException e) {
+				ThrowOperationTimeoutException ("TypeKey", result.SourceQuery, result, e);
+			}
 
 			return true;
 		}
@@ -429,11 +510,103 @@ namespace MonoDevelop.Components.AutoTest
 		{
 			bool success = false;
 
-			ExecuteOnIdleAndWait (() => {
-				success = result.Toggle (active);
-			});
+			try {
+				ExecuteOnIdle (() => {
+					success = result.Toggle (active);
+				});
+			} catch (TimeoutException e) {
+				ThrowOperationTimeoutException ("Toggle", result.SourceQuery, result, e);
+			}
 
 			return success;
+		}
+
+		public void Flash (AppResult result)
+		{
+			try {
+				ExecuteOnIdle (() => result.Flash (() => AutoTestService.NotifyEvent ("FlashCompleted")));
+			} catch (TimeoutException e) {
+				ThrowOperationTimeoutException ("Flash", result.SourceQuery, result, e);
+			}
+		}
+
+		void ThrowOperationTimeoutException (string operation, string query, AppResult result, Exception innerException)
+		{
+			throw new TimeoutException (string.Format ("Timeout while executing {0}: {1}\n\ton Element: {2}", operation, query, result), innerException);
+		}
+
+		void AddChildrenToDocument (XmlDocument document, XmlElement parentElement, AppResult children, bool withSiblings = true)
+		{
+			while (children != null) {
+				XmlElement childElement = document.CreateElement ("result");
+				children.ToXml (childElement);
+				parentElement.AppendChild (childElement);
+
+				if (children.FirstChild != null) {
+					AddChildrenToDocument (document, childElement, children.FirstChild);
+				}
+
+				children = withSiblings ? children.NextSibling : null;
+			}
+		}
+
+		class UTF8StringWriter : StringWriter
+		{
+			public override Encoding Encoding {
+				get {
+					return Encoding.UTF8;
+				}
+			}
+		}
+
+		//
+		// The XML result structure
+		// <AutoTest>
+		//   <query>c =&gt; c.Window()</query>
+		//   <results>
+		//     <result type="Gtk.Window" fulltype="Gtk.Window" name="Main Window" visible="true" sensitive="true" allocation="1,1 1024x1024">
+		//       ... contains result elements for all children widgets ...
+		//     </result>
+		//     ... and more result element trees for each of the AppResult in results ...
+		//   </results>
+		// </AutoTest>
+		//
+		public string ResultsAsXml (AppResult[] results)
+		{
+			XmlDocument document = new XmlDocument ();
+			XmlElement rootElement = document.CreateElement ("AutoTest");
+			document.AppendChild (rootElement);
+
+			if (results [0].SourceQuery != null) {
+				XmlElement queryElement = document.CreateElement ("query");
+				queryElement.AppendChild (document.CreateTextNode (results [0].SourceQuery));
+				rootElement.AppendChild (queryElement);
+			}
+
+			XmlElement resultsElement = document.CreateElement ("results");
+			rootElement.AppendChild (resultsElement);
+
+			try {
+				ExecuteOnIdle (() => {
+					foreach (var result in results) {
+						AddChildrenToDocument (document, resultsElement, result, false);
+					}
+				});
+			} catch (TimeoutException e) {
+				ThrowOperationTimeoutException ("ResultsAsXml", null, null, e);
+			}
+
+			string output;
+
+			using (var sw = new UTF8StringWriter ()) {
+				using (var xw = XmlWriter.Create (sw, new XmlWriterSettings { Indent = true })) {
+					document.WriteTo (xw);
+				}
+
+				output = sw.ToString ();
+			}
+
+			return output;
 		}
 	}
 

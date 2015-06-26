@@ -405,6 +405,8 @@ namespace MonoDevelop.SourceEditor
 				UpdateLineCol ();
 			};
 			vbox.Destroyed += delegate {
+				if (isDisposed)
+					return;
 				isDisposed = true;
 				StopParseInfoThread ();
 				KillWidgets ();
@@ -412,6 +414,12 @@ namespace MonoDevelop.SourceEditor
 				ClearQuickTaskProvider ();
 				ClearUsageTaskProvider ();
 
+				if (textEditor != null && !textEditor.IsDestroyed)
+					textEditor.Destroy ();
+
+				if (splittedTextEditor != null && !splittedTextEditor.IsDestroyed)
+					splittedTextEditor.Destroy ();
+				
 				this.lastActiveEditor = null;
 				this.splittedTextEditor = null;
 				this.textEditor = null;
@@ -462,6 +470,11 @@ namespace MonoDevelop.SourceEditor
 		{
 			if (IdeApp.CommandService != null)
 				IdeApp.FocusOut -= IdeApp_FocusOut;
+
+			if (!isDisposed) {
+				vbox.Destroy ();
+				isDisposed = true;
+			}
 		}
 		
 		Mono.TextEditor.FoldSegment AddMarker (List<Mono.TextEditor.FoldSegment> foldSegments, string text, DomRegion region, Mono.TextEditor.FoldingType type)

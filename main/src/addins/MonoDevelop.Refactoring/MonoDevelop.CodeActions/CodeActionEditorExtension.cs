@@ -38,7 +38,7 @@ using Microsoft.CodeAnalysis.Text;
 using MonoDevelop.Ide.TypeSystem;
 using MonoDevelop.Ide;
 using Microsoft.CodeAnalysis.CodeActions;
-using ICSharpCode.NRefactory6.CSharp.Refactoring;
+using RefactoringEssentials;
 using MonoDevelop.AnalysisCore;
 using MonoDevelop.Ide.Editor;
 using MonoDevelop.Components;
@@ -433,7 +433,9 @@ namespace MonoDevelop.CodeActions
 
 		AppKit.NSMenu CreateNSMenu (FixMenuDescriptor entrySet)
 		{
-			var menu = new AppKit.NSMenu ();
+			var menu = new AppKit.NSMenu {
+				Font = AppKit.NSFont.MenuFontOfSize (12),
+			};
 			foreach (var item in entrySet.Items) {
 				if (item == FixMenuEntry.Separator) {
 					menu.AddItem (AppKit.NSMenuItem.SeparatorItem);
@@ -480,6 +482,16 @@ namespace MonoDevelop.CodeActions
 			return menu;
 		}
 
+		static string CreateLabel (string title, ref int mnemonic)
+		{
+			var escapedLabel = title.Replace ("_", "__");
+			#if MAC
+			return escapedLabel;
+			#else
+			return (mnemonic <= 10) ? "_" + mnemonic++ % 10 + " \u2013 " + escapedLabel : "  " + escapedLabel;
+			#endif
+		}
+
 		void PopulateFixes (FixMenuDescriptor menu, ref int items)
 		{
 			int mnemonic = 1;
@@ -494,10 +506,7 @@ namespace MonoDevelop.CodeActions
 				}
 
 				var fix = fix_;
-				var escapedLabel = fix.CodeAction.Title.Replace ("_", "__");
-				var label = (mnemonic <= 10)
-					? "_" + (mnemonic++ % 10).ToString () + " " + escapedLabel
-					: "  " + escapedLabel;
+				var label = CreateLabel (fix.CodeAction.Title, ref mnemonic);
 				var thisInstanceMenuItem = new FixMenuEntry (label, delegate {
 					new ContextActionRunner (fix.CodeAction, Editor, DocumentContext).Run (null, EventArgs.Empty);
 					ConfirmUsage (fix.CodeAction.EquivalenceKey);
@@ -514,10 +523,7 @@ namespace MonoDevelop.CodeActions
 					first = false;
 				}
 
-				var escapedLabel = fix.CodeAction.Title.Replace ("_", "__");
-				var label = (mnemonic <= 10)
-					? "_" + (mnemonic++ % 10).ToString () + " " + escapedLabel
-					: "  " + escapedLabel;
+				var label = CreateLabel (fix.CodeAction.Title, ref mnemonic);
 				var thisInstanceMenuItem = new FixMenuEntry (label, delegate {
 					new ContextActionRunner (fix.CodeAction, Editor, DocumentContext).Run (null, EventArgs.Empty);
 					ConfirmUsage (fix.CodeAction.EquivalenceKey);
