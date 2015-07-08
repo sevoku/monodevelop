@@ -46,6 +46,7 @@ namespace MonoDevelop.Ide.Templates
 			Wizard = template.WizardPath;
 			SupportedParameters = template.SupportedParameters;
 			DefaultParameters = template.DefaultParameters;
+			DefaultProjectName = template.DefaultProjectName;
 			ImageId = template.ImageId;
 			ImageFile = template.ImageFile;
 			Visibility = GetVisibility (template.Visibility);

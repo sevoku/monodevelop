@@ -227,7 +227,8 @@ namespace MonoDevelop.Ide.Projects
 
 		public void UpdateFromParameters ()
 		{
-			ProjectName = Parameters ["ProjectName"];
+			var projectName = template.DefaultProjectName ?? "App";
+			ProjectName = string.IsNullOrEmpty (Parameters ["ProjectName"]) ? projectName : Parameters ["ProjectName"];
 			projectNameIsReadOnly = Parameters.GetBoolean ("IsProjectNameReadOnly", false);
 		}
 	}

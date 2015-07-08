@@ -168,6 +168,12 @@ namespace MonoDevelop.Ide.Templates
 			get { return defaultParameters; }
 		}
 
+		private string defaultProjectName;
+
+		public string DefaultProjectName {
+			get { return defaultProjectName; }
+		}
+
 		private string imageId;
 		public string ImageId {
 			get { return imageId; }
@@ -271,6 +277,10 @@ namespace MonoDevelop.Ide.Templates
 
 			if (xmlConfiguration ["DefaultParameters"] != null) {
 				this.defaultParameters = xmlConfiguration ["DefaultParameters"].InnerText;
+			}
+
+			if (xmlConfiguration ["DefaultProjectName"] != null) {
+				this.defaultProjectName = xmlConfiguration ["DefaultProjectName"].InnerText;
 			}
 
 			if (xmlConfiguration ["Image"] != null) {
