@@ -413,6 +413,7 @@ namespace MonoDevelop.NUnit
 		void RunTests ()
 		{
 			try {
+				LoggingService.LogInfo ("NUnitService.RunTests start");
 				NUnitService.ResetResult (test);
 
 				TestContext ctx = new TestContext (monitor, resultsPad, context, DateTime.Now);
@@ -433,6 +434,7 @@ namespace MonoDevelop.NUnit
 			}
 			if (Completed != null)
 				Completed (this);
+			LoggingService.LogInfo ("NUnitService.RunTests end");
 		}
 		
 		void ITestProgressMonitor.BeginTest (UnitTest test)

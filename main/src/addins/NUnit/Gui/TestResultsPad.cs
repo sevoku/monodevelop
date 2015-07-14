@@ -259,6 +259,8 @@ namespace MonoDevelop.NUnit
 		
 		public void OnTestSuiteChanged (object sender, EventArgs e)
 		{
+			LoggingService.LogInfo ("TestResultsPad.OnTestSuiteChanged start");
+			LoggingService.LogInfo ("TestResultsPad.OnTestSuitChanged called from: {0}", System.Environment.StackTrace);
 			if (failuresTreeView.IsRealized)
 				failuresTreeView.ScrollToPoint (0, 0);
 
@@ -267,6 +269,7 @@ namespace MonoDevelop.NUnit
 			error = null;
 			errorMessage = null;
 			
+			LoggingService.LogInfo ("TestResultsPad.OnTestSuiteChanged failuresStore.Cleared");
 			failuresStore.Clear ();
 			outputView.Buffer.Clear ();
 			outIters.Clear ();
@@ -280,6 +283,7 @@ namespace MonoDevelop.NUnit
 				if (rootTest == null)
 					buttonRun.Sensitive = false;
 			}
+			LoggingService.LogInfo ("TestResultsPad.OnTestSuitChanged end");
 		}
 		
 		bool Running {
@@ -312,6 +316,8 @@ namespace MonoDevelop.NUnit
 		
 		public void InitializeTestRun (UnitTest test)
 		{
+			LoggingService.LogInfo ("TestResultsPad.InitializeTestRun start");
+			LoggingService.LogInfo ("TestResultsPad.InitializeTestRun called from: {0}", System.Environment.StackTrace);
 			rootTest = test;
 			results.Clear ();
 
@@ -337,6 +343,7 @@ namespace MonoDevelop.NUnit
 			if (failuresTreeView.IsRealized)
 				failuresTreeView.ScrollToPoint (0, 0);
 			
+			LoggingService.LogInfo ("TestResultsPad.InitializeTestRun failuresStore.Clear");
 			failuresStore.Clear ();
 			outputView.Buffer.Clear ();
 			outIters.Clear ();
@@ -346,6 +353,7 @@ namespace MonoDevelop.NUnit
 			configuration = IdeApp.Workspace.ActiveConfigurationId;
 			
 			AddStartMessage ();
+			LoggingService.LogInfo ("TestResultsPad.InitializeTestRun end");
 		}
 		
 		public void AddStartMessage (bool isRunning = true)
@@ -422,6 +430,8 @@ namespace MonoDevelop.NUnit
 		
 		public void FinishTestRun ()
 		{
+			LoggingService.LogInfo ("TestResultsPad.FinishTestRun start");
+			LoggingService.LogInfo ("TestResultsPad.FinishTestRun called from: {0}", System.Environment.StackTrace);
 			if (!Gtk.TreeIter.Zero.Equals (startMessageIter)) {
 				string msg = string.Format (GettextCatalog.GetString ("Test results for <b>{0}</b> configuration <b>{1}</b>"), rootTest != null ? rootTest.Name : "null", configuration);
 				failuresStore.SetValue (startMessageIter, 1, msg);
@@ -442,6 +452,7 @@ namespace MonoDevelop.NUnit
 			resultLabel.Markup = GetResultsMarkup ();
 
 			Running = false;
+			LoggingService.LogInfo ("TestResultsPad.RefreshList end");
 		}
 		
 		void OnStopClicked (object sender, EventArgs args)
@@ -622,9 +633,12 @@ namespace MonoDevelop.NUnit
 		
 		void RefreshList ()
 		{
+			LoggingService.LogInfo ("TestResultsPad.RefreshList start");
+			LoggingService.LogInfo ("TestResultsPad.RefreshList called from: {0}", System.Environment.StackTrace);
 			if (failuresTreeView.IsRealized)
 				failuresTreeView.ScrollToPoint (0, 0);
 
+			LoggingService.LogInfo ("TestResultsPad.RefreshList failuresStore.Cleared");
 			failuresStore.Clear ();
 			outputView.Buffer.Clear ();
 			outIters.Clear ();
@@ -636,6 +650,7 @@ namespace MonoDevelop.NUnit
 			
 			if (error != null)
 				AddErrorMessage ();
+			LoggingService.LogInfo ("TestResultsPad.RefreshList end");
 		}
 		
 		void ShowTestResult (UnitTest test, UnitTestResult result)
