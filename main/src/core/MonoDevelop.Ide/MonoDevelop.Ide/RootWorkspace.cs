@@ -124,6 +124,7 @@ namespace MonoDevelop.Ide
 			}
 			set {
 				if (activeConfiguration != value) {
+					LoggingService.LogInfo ("RootWorkspace.ActiveConfigurationId changed. Old='{0}', New='{1}'", activeConfiguration, value);
 					activeConfiguration = value;
 					OnActiveConfigurationChanged ();
 				}
