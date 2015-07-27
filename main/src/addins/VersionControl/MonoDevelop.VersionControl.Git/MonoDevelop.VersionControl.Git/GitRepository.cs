@@ -598,39 +598,47 @@ namespace MonoDevelop.VersionControl.Git
 		static void RetryUntilSuccess (IProgressMonitor monitor, Action func)
 		{
 			bool retry;
-			do {
-				try {
-					func ();
-					GitCredentials.StoreCredentials ();
-					retry = false;
-				} catch (AuthenticationException) {
-					GitCredentials.InvalidateCredentials ();
-					retry = true;
-				} catch (VersionControlException e) {
-					GitCredentials.InvalidateCredentials ();
-					if (monitor != null)
-						monitor.ReportError (e.Message, null);
-					retry = false;
-				} catch (UserCancelledException) {
-					GitCredentials.StoreCredentials ();
-					retry = false;
-				} catch (LibGit2SharpException e) {
-					GitCredentials.InvalidateCredentials ();
+			using (var tfsSession = new TfsSmartSession ()) {
+				do {
+					try {
+						func ();
+						GitCredentials.StoreCredentials ();
+						retry = false;
+					} catch (AuthenticationException) {
+						GitCredentials.InvalidateCredentials ();
+						retry = true;
+					} catch (VersionControlException e) {
+						GitCredentials.InvalidateCredentials ();
+						if (monitor != null)
+							monitor.ReportError (e.Message, null);
+						retry = false;
+					} catch (UserCancelledException) {
+						GitCredentials.StoreCredentials ();
+						retry = false;
+					} catch (LibGit2SharpException e) {
+						if (!tfsSession.Disposed) {
+							retry = true;
+							tfsSession.Dispose ();
+							continue;
+						}
 
-					string message;
-					// TODO: Remove me once https://github.com/libgit2/libgit2/pull/3137 goes in.
-					if (string.Equals (e.Message, "early EOF", StringComparison.OrdinalIgnoreCase))
-						message = "Unable to authorize credentials for the repository.";
-					else if (string.Equals (e.Message, "Received unexpected content-type", StringComparison.OrdinalIgnoreCase))
-						message = "Not a valid git repository.";
-					else
-						message = e.Message;
+						GitCredentials.InvalidateCredentials ();
 
-					if (monitor != null)
-						monitor.ReportError (message, null);
-					retry = false;
-				}
-			} while (retry);
+						string message;
+						// TODO: Remove me once https://github.com/libgit2/libgit2/pull/3137 goes in.
+						if (string.Equals (e.Message, "early EOF", StringComparison.OrdinalIgnoreCase))
+							message = "Unable to authorize credentials for the repository.";
+						else if (string.Equals (e.Message, "Received unexpected content-type", StringComparison.OrdinalIgnoreCase))
+							message = "Not a valid git repository.";
+						else
+							message = e.Message;
+
+						if (monitor != null)
+							monitor.ReportError (message, null);
+						retry = false;
+					}
+				} while (retry);
+			}
 		}
 
 		public void Fetch (IProgressMonitor monitor, string remote)
@@ -1225,7 +1233,9 @@ namespace MonoDevelop.VersionControl.Git
 
 		public IEnumerable<string> GetRemoteBranches (string remoteName)
 		{
-			return RootRepository.Branches.Where (b => b.IsRemote && b.Remote.Name == remoteName).Select (b => b.FriendlyName.Substring (b.FriendlyName.IndexOf ('/') + 1));
+			return RootRepository.Branches
+				.Where (b => b.IsRemote && b.Remote != null && b.Remote.Name == remoteName)
+				.Select (b => b.FriendlyName.Substring (b.FriendlyName.IndexOf ('/') + 1));
 		}
 
 		public string GetCurrentBranch ()
