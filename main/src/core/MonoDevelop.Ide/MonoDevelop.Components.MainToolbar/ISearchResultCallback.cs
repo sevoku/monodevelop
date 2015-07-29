@@ -1,9 +1,10 @@
-// LocalsPad.cs
+﻿//
+// ISearchResultCallback.cs
 //
 // Author:
-//   Lluis Sanchez Gual <lluis@novell.com>
+//       Mike Krüger <mkrueger@xamarin.com>
 //
-// Copyright (c) 2008 Novell, Inc (http://www.novell.com)
+// Copyright (c) 2015 Xamarin Inc. (http://xamarin.com)
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -22,34 +23,14 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
-//
-//
-
 using System;
-using Mono.Debugging.Client;
-using System.Collections.Generic;
-using System.Linq;
 
-namespace MonoDevelop.Debugger
+namespace MonoDevelop.Components.MainToolbar
 {
-	public class LocalsPad : ObjectValuePad
+	public interface ISearchResultCallback
 	{
-		public LocalsPad ()
-		{
-			tree.AllowEditing = true;
-			tree.AllowAdding = false;
-		}
+		void ReportResult (SearchResult result);
 
-		public override void OnUpdateList ()
-		{
-			base.OnUpdateList ();
-
-			var frame = DebuggingService.CurrentFrame;
-			
-			if (frame == null)
-				return;
-
-			tree.AddValues (frame.GetAllLocals ().Where (l => !string.IsNullOrWhiteSpace (l.Name) && l.Name != "?").ToArray ());
-		}
 	}
 }
+

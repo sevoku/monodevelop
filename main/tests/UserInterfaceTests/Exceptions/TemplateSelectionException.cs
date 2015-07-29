@@ -1,9 +1,10 @@
-// LocalsPad.cs
+﻿//
+// TemplateSelectionException.cs
 //
 // Author:
-//   Lluis Sanchez Gual <lluis@novell.com>
+//       Manish Sinha <manish.sinha@xamarin.com>
 //
-// Copyright (c) 2008 Novell, Inc (http://www.novell.com)
+// Copyright (c) 2015 Xamarin Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -22,34 +23,15 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
-//
-//
-
 using System;
-using Mono.Debugging.Client;
-using System.Collections.Generic;
-using System.Linq;
 
-namespace MonoDevelop.Debugger
+namespace UserInterfaceTests
 {
-	public class LocalsPad : ObjectValuePad
+	public class TemplateSelectionException : Exception
 	{
-		public LocalsPad ()
+		public TemplateSelectionException (string message) : base (message)
 		{
-			tree.AllowEditing = true;
-			tree.AllowAdding = false;
-		}
-
-		public override void OnUpdateList ()
-		{
-			base.OnUpdateList ();
-
-			var frame = DebuggingService.CurrentFrame;
-			
-			if (frame == null)
-				return;
-
-			tree.AddValues (frame.GetAllLocals ().Where (l => !string.IsNullOrWhiteSpace (l.Name) && l.Name != "?").ToArray ());
 		}
 	}
 }
+

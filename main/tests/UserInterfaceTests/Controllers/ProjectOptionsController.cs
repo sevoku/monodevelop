@@ -1,5 +1,5 @@
 ﻿//
-// SolutionExplorerController.cs
+// ProjectOptionsController.cs
 //
 // Author:
 //       Manish Sinha <manish.sinha@xamarin.com>
@@ -25,26 +25,50 @@
 // THE SOFTWARE.
 using System;
 using MonoDevelop.Components.AutoTest;
+using MonoDevelop.Ide.Commands;
 
 namespace UserInterfaceTests
 {
-	public static class SolutionExplorerController
+	public class ProjectOptionsController
 	{
 		static AutoTestClientSession Session {
 			get { return TestService.Session; }
 		}
 
-		readonly static Func<AppQuery, AppQuery> topLevel = c => c.Window ().Children ().TreeView ().Marked (
-			"MonoDevelop.Ide.Gui.Components.ExtensibleTreeView+ExtensibleTreeViewTree").Model ();
+		Action<string> takeScreenshot;
 
-		public static Func<AppQuery, AppQuery> GetSolutionQuery (string solutionLabel)
+		public ProjectOptionsController (Action<string> takeScreenshot = null)
 		{
-			return c => topLevel (c).Children (false).Index (0).Property ("Label", solutionLabel);
+			this.takeScreenshot = takeScreenshot ?? delegate { };
 		}
 
-		public static Func<AppQuery, AppQuery> GetProjectQuery (string solutionLabel, string projectLabel)
+		public void OpenProjectOptions ()
 		{
-			return c => topLevel (c).Children (false).Index (0).Property ("Label", solutionLabel).Children (false).Property ("Label", projectLabel).Index (0);
+			Session.Query (IdeQuery.TextArea);
+			Session.ExecuteCommand (ProjectCommands.ProjectOptions);
+			Session.WaitForElement (c => c.Window ().Marked ("MonoDevelop.Ide.Projects.ProjectOptionsDialog"));
+			takeScreenshot ("Opened-ProjectOptionsDialog");
+		}
+
+		public void OpenSolutionOptions ()
+		{
+			throw new NotImplementedException ();
+		}
+
+		public void SelectPane (string name)
+		{
+			Session.SelectElement (c => c.Window ().Marked ("MonoDevelop.Ide.Projects.ProjectOptionsDialog").Children ().Marked (
+				"__gtksharp_16_MonoDevelop_Components_HeaderBox").Children ().TreeView ().Model ().Children ().Property ("Label", name));
+		}
+
+		public void ClickOK ()
+		{
+			Session.ClickElement (c => c.Window ().Marked ("MonoDevelop.Ide.Projects.ProjectOptionsDialog").Children ().Button ().Text ("OK"));
+		}
+
+		public void ClickCancel ()
+		{
+			Session.ClickElement (c => c.Window ().Marked ("MonoDevelop.Ide.Projects.ProjectOptionsDialog").Children ().Button ().Text ("Cancel"));
 		}
 	}
 }

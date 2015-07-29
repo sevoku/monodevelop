@@ -45,6 +45,13 @@ namespace UserInterfaceTests
 			Session.WaitForElement (c => c.Window ().Marked ("MonoDevelop.Ide.Projects.GtkNewProjectDialogBackend"));
 		}
 
+		public void Open (string addToSolutionName)
+		{
+			Session.SelectElement (SolutionExplorerController.GetSolutionQuery (addToSolutionName));
+			Session.ExecuteCommand (ProjectCommands.AddNewProject);
+			Session.WaitForElement (c => c.Window ().Marked ("New Project"));
+		}
+
 		public bool SelectTemplateType (string categoryRoot, string category)
 		{
 			return Session.SelectElement (c => c.TreeView ().Marked ("templateCategoriesTreeView").Model ("templateCategoriesListStore__Name").Contains (categoryRoot).NextSiblings ().Text (category));
@@ -57,7 +64,12 @@ namespace UserInterfaceTests
 
 		public bool Next ()
 		{
-			return Session.ClickElement (c => c.Button ().Marked ("nextButton"));
+			return Session.ClickElement (c => c.Button ().Text ("Next"));
+		}
+
+		public bool Create ()
+		{
+			return Session.ClickElement (c => c.Button ().Text ("Create"));
 		}
 
 		public bool Previous ()
@@ -75,9 +87,14 @@ namespace UserInterfaceTests
 			return Session.EnterText (c => c.Textfield ().Marked ("projectNameTextBox"), projectName);
 		}
 
-		public bool SetSolutionName (string solutionName)
+		public bool SetSolutionName (string solutionName, bool addToExistingSolution)
 		{
-			return Session.EnterText (c => c.Textfield ().Marked ("solutionNameTextBox"), solutionName);
+			Func<AppQuery, AppQuery> solutionNameTextBox = c => c.Textfield ().Marked ("solutionNameTextBox");
+			if (addToExistingSolution) {
+				return Session.Query (c => solutionNameTextBox (c).Sensitivity (false)).Length > 0 &&
+					Session.Query (c => solutionNameTextBox (c).Text (solutionName)).Length > 0;
+			}
+			return Session.EnterText (solutionNameTextBox, solutionName);
 		}
 
 		public bool SetSolutionLocation (string solutionLocation)

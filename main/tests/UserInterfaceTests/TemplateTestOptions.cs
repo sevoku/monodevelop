@@ -23,6 +23,7 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
+
 using System;
 
 namespace UserInterfaceTests
@@ -70,6 +71,11 @@ namespace UserInterfaceTests
 		public bool UseGit { get; set; }
 
 		public bool UseGitIgnore { get; set; }
+
+		public override string ToString ()
+		{
+			return string.Format ("UseGit={0}, UseGitIgnore={1}", UseGit, UseGitIgnore);
+		}
 	}
 
 	public class ProjectDetails
@@ -86,6 +92,16 @@ namespace UserInterfaceTests
 			SolutionName = ProjectName;
 		}
 
+		public static ProjectDetails ToExistingSolution (string solutionName, string projectName)
+		{
+			return new ProjectDetails  {
+				ProjectName = projectName,
+				SolutionName = solutionName,
+				AddProjectToExistingSolution = true,
+				SolutionLocation = null
+			};
+		}
+
 		public string ProjectName { get; set; }
 
 		public string SolutionName { get; set; }
@@ -93,6 +109,8 @@ namespace UserInterfaceTests
 		public string SolutionLocation { get; set; }
 
 		public bool ProjectInSolution { get; set; }
+
+		public bool AddProjectToExistingSolution { get; set; }
 	}
 
 	public class NewFileOptions
