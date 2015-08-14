@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2011 AlphaSierraPapa for the SharpDevelop Team
+﻿// Copyright (c) AlphaSierraPapa for the SharpDevelop Team
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -17,26 +17,25 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
-using System.Runtime.Serialization;
-using Mono.Cecil;
 
-namespace ICSharpCode.Decompiler
+public class UndocumentedExpressions
 {
-	/// <summary>
-	/// Description of DecompilerException.
-	/// </summary>
-	public class DecompilerException : Exception, ISerializable
+	public static int GetArgCount(__arglist)
 	{
-		public MethodDefinition DecompiledMethod { get; set; }
-		
-		public DecompilerException(MethodDefinition decompiledMethod, Exception innerException) 
-			: base("Error decompiling " + decompiledMethod.FullName + Environment.NewLine, innerException)
-		{
-		}
-
-		// This constructor is needed for serialization.
-		protected DecompilerException(SerializationInfo info, StreamingContext context) : base(info, context)
-		{
-		}
+		ArgIterator argIterator = new ArgIterator(__arglist);
+		return argIterator.GetRemainingCount();
+	}
+	
+	public static void MakeTypedRef(object o)
+	{
+		TypedReference tr = __makeref(o);
+		UndocumentedExpressions.AcceptTypedRef(tr);
+	}
+	
+	private static void AcceptTypedRef(TypedReference tr)
+	{
+		Console.WriteLine("Value is: " + __refvalue(tr, object).ToString());
+		Console.WriteLine("Type is: " + __reftype(tr).Name);
+		__refvalue(tr, object) = 1;
 	}
 }

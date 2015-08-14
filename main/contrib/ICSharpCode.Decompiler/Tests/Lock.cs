@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2011 AlphaSierraPapa for the SharpDevelop Team
+﻿// Copyright (c) AlphaSierraPapa for the SharpDevelop Team
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -17,26 +17,22 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
-using System.Runtime.Serialization;
-using Mono.Cecil;
 
-namespace ICSharpCode.Decompiler
+public class Lock
 {
-	/// <summary>
-	/// Description of DecompilerException.
-	/// </summary>
-	public class DecompilerException : Exception, ISerializable
+	public void LockThis()
 	{
-		public MethodDefinition DecompiledMethod { get; set; }
-		
-		public DecompilerException(MethodDefinition decompiledMethod, Exception innerException) 
-			: base("Error decompiling " + decompiledMethod.FullName + Environment.NewLine, innerException)
+		lock (this)
 		{
+			Console.WriteLine();
 		}
+	}
 
-		// This constructor is needed for serialization.
-		protected DecompilerException(SerializationInfo info, StreamingContext context) : base(info, context)
+	public void LockOnType()
+	{
+		lock (typeof(Lock))
 		{
+			Console.WriteLine();
 		}
 	}
 }

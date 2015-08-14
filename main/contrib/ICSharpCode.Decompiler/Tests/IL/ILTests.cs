@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2011 AlphaSierraPapa for the SharpDevelop Team
+﻿// Copyright (c) AlphaSierraPapa for the SharpDevelop Team
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -17,26 +17,35 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
-using System.Runtime.Serialization;
+using System.IO;
+using ICSharpCode.Decompiler.Ast;
+using ICSharpCode.Decompiler.Tests.Helpers;
 using Mono.Cecil;
+using NUnit.Framework;
 
-namespace ICSharpCode.Decompiler
+namespace ICSharpCode.Decompiler.Tests
 {
-	/// <summary>
-	/// Description of DecompilerException.
-	/// </summary>
-	public class DecompilerException : Exception, ISerializable
+	[TestFixture]
+	public class ILTests
 	{
-		public MethodDefinition DecompiledMethod { get; set; }
+		const string path = "../../Tests/IL";
 		
-		public DecompilerException(MethodDefinition decompiledMethod, Exception innerException) 
-			: base("Error decompiling " + decompiledMethod.FullName + Environment.NewLine, innerException)
+		[Test]
+		public void SequenceOfNestedIfs()
 		{
+			Run("SequenceOfNestedIfs.dll", "SequenceOfNestedIfs.Output.cs");
 		}
-
-		// This constructor is needed for serialization.
-		protected DecompilerException(SerializationInfo info, StreamingContext context) : base(info, context)
+		
+		void Run(string compiledFile, string expectedOutputFile)
 		{
+			string expectedOutput = File.ReadAllText(Path.Combine(path, expectedOutputFile));
+			var assembly = AssemblyDefinition.ReadAssembly(Path.Combine(path, compiledFile));
+			AstBuilder decompiler = new AstBuilder(new DecompilerContext(assembly.MainModule));
+			decompiler.AddAssembly(assembly);
+			new Helpers.RemoveCompilerAttribute().Run(decompiler.SyntaxTree);
+			StringWriter output = new StringWriter();
+			decompiler.GenerateCode(new PlainTextOutput(output));
+			CodeAssert.AreEqual(expectedOutput, output.ToString());
 		}
 	}
 }
