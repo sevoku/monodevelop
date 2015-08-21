@@ -78,6 +78,12 @@ namespace UserInterfaceTests
 			TestService.Session.DebugObject = new UITestDebug ();
 
 			FoldersToClean.Add (mdProfile);
+
+			try {
+				Session.WaitForElement (c => c.Marked ("Xamarin Update"));
+				Session.ClickElement (c => c.Button ().Text ("Close"));
+			} catch (TimeoutException) {
+			}
 		}
 
 		[TearDown]
