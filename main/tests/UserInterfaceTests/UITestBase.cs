@@ -30,6 +30,7 @@ using MonoDevelop.Components.AutoTest;
 using System;
 using System.Collections.Generic;
 using Newtonsoft.Json;
+using System.Linq;
 
 namespace UserInterfaceTests
 {
@@ -77,26 +78,55 @@ namespace UserInterfaceTests
 			TestService.Session.DebugObject = new UITestDebug ();
 
 			FoldersToClean.Add (mdProfile);
+
+			Session.WaitForElement (IdeQuery.DefaultWorkbench);
+			TakeScreenShot ("Application-Started");
+			CloseIfXamarinUpdateOpen ();
+			TakeScreenShot ("Application-Ready");
 		}
 
 		[TearDown]
 		public virtual void Teardown ()
 		{
-			var testStatus = TestContext.CurrentContext.Result.Status;
-			if (testStatus != TestStatus.Passed) {
-				TakeScreenShot (string.Format("{0}-Test-Failed", TestContext.CurrentContext.Test.Name));
+			try {
+				if (TestContext.CurrentContext.Result.Status != TestStatus.Passed && Session.Query (IdeQuery.XamarinUpdate).Any ()) {
+					Assert.Inconclusive ("Xamarin Update is blocking the application focus");
+				}
+				ValidateIdeLogMessages ();
+			} finally {
+				var testStatus = TestContext.CurrentContext.Result.Status;
+				if (testStatus != TestStatus.Passed) {
+					TakeScreenShot (string.Format ("{0}-Test-Failed", TestContext.CurrentContext.Test.Name));
+				}
+
+				File.WriteAllText (Path.Combine (currentTestResultFolder, "MemoryUsage.json"),
+					JsonConvert.SerializeObject (Session.MemoryStats, Formatting.Indented));
+
+				Ide.CloseAll ();
+				TestService.EndSession ();
+
+				OnCleanUp ();
+				if (testStatus == TestStatus.Passed) {
+					if (Directory.Exists (currentTestResultScreenshotFolder))
+						Directory.Delete (currentTestResultScreenshotFolder, true);
+				}
 			}
+		}
 
-			File.WriteAllText (Path.Combine (currentTestResultFolder, "MemoryUsage.json"),
-			                   JsonConvert.SerializeObject (Session.MemoryStats, Formatting.Indented));
+		static void ValidateIdeLogMessages ()
+		{
+			LogMessageValidator.Validate (Environment.GetEnvironmentVariable ("MONODEVELOP_LOG_FILE"));
+		}
 
-			Ide.CloseAll ();
-			TestService.EndSession ();
-
-			OnCleanUp ();
-			if (testStatus == TestStatus.Passed) {
-				if (Directory.Exists (currentTestResultScreenshotFolder))
-					Directory.Delete (currentTestResultScreenshotFolder, true);
+		protected void CloseIfXamarinUpdateOpen ()
+		{
+			try {
+				Session.WaitForElement (IdeQuery.XamarinUpdate, 10 * 1000);
+				TakeScreenShot ("Xamarin-Update-Opened");
+				Session.ClickElement (c => IdeQuery.XamarinUpdate (c).Children ().Button ().Text ("Close"));
+			}
+			catch (TimeoutException) {
+				TestService.Session.DebugObject.Debug ("Xamarin Update did not open");
 			}
 		}
 
@@ -138,7 +168,7 @@ namespace UserInterfaceTests
 					if (folder != null && Directory.Exists (folder))
 						Directory.Delete (folder, true);
 				} catch (IOException e) {
-					Console.WriteLine ("Cleanup failed\n" +e.ToString ());
+					TestService.Session.DebugObject.Debug ("Cleanup failed\n" +e);
 				}
 			}
 		}
@@ -149,6 +179,7 @@ namespace UserInterfaceTests
 				var dirObj = Session.GetGlobalValue ("MonoDevelop.Ide.IdeApp.ProjectOperations.CurrentSelectedSolution.RootFolder.BaseDirectory");
 			return dirObj != null ? dirObj.ToString () : null;
 			} catch (Exception) {
+				TestService.Session.DebugObject.Debug ("GetSolutionDirectory () returns null");
 				return null;
 			}
 		}
