@@ -313,6 +313,11 @@ namespace MonoDevelop.Ide
 			PlatformService.SetMainWindowDecorations (window);
 		}
 
+		public static void SMWD (Gtk.Window window)
+		{
+			PlatformService.SMWD (window);
+		}
+
 		internal static MainToolbarController CreateMainToolbar (Gtk.Window window)
 		{
 			return new MainToolbarController (PlatformService.CreateMainToolbar (window));

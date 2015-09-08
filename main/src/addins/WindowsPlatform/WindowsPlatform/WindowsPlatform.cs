@@ -45,6 +45,8 @@ using System.Text;
 using MonoDevelop.Core;
 using Microsoft.WindowsAPICodePack.Taskbar;
 using MonoDevelop.Ide;
+using System.Windows.Interop;
+using WindowsPlatform;
 
 namespace MonoDevelop.Platform
 {
@@ -67,9 +69,49 @@ namespace MonoDevelop.Platform
 		internal override void SetMainWindowDecorations (Gtk.Window window)
 		{
 			// Only initialize elements for Win7+.
+			var ptr = GdkWin32.HgdiobjGet (IdeApp.Workbench.RootWindow.GdkWindow);
 			if (TaskbarManager.IsPlatformSupported) {
 				TaskbarManager.Instance.SetApplicationIdForSpecificWindow (GdkWin32.HgdiobjGet (window.GdkWindow), BrandingService.ApplicationName);
 			}
+		}
+
+		//Specifies the zero-based offset to the value to be set.
+		//Valid values are in the range zero through the number of bytes of extra window memory, 
+		//minus the size of an integer.
+		public enum GWLParameter
+		{
+			GWL_EXSTYLE = -20, //Sets a new extended window style
+			GWL_HINSTANCE = -6, //Sets a new application instance handle.
+			GWL_HWNDPARENT = -8, //Set window handle as parent
+			GWL_ID = -12, //Sets a new identifier of the window.
+			GWL_STYLE = -16, // Set new window style
+			GWL_USERDATA = -21, //Sets the user data associated with the window. 
+			//This data is intended for use by the application 
+			//that created the window. Its value is initially zero.
+			GWL_WNDPROC = -4 //Sets a new address for the window procedure.
+		}
+
+		System.Windows.Window OnTopControl;
+		internal override void SMWD (Gtk.Window window)
+		{
+			var ptr = GdkWin32.WinGetHandle (IdeApp.Workbench.RootWindow.GdkWindow);
+			var w4 = new System.Windows.Forms.NativeWindow ();
+			w4.AssignHandle (ptr);
+
+			if (OnTopControl != null)
+				OnTopControl.Close();
+			//Creates new instance of HoverControl
+			OnTopControl = new HoverControl();
+			OnTopControl.MouseDown += (sender, e) => OnTopControl.Hide ();
+			OnTopControl.Show();
+			//Search for HoverControl handle
+			IntPtr OnTopHandle = new WindowInteropHelper (OnTopControl).Handle;
+
+			//Set the new location of the control (on top the titlebar)
+			OnTopControl.Left = window.Allocation.Left;
+			OnTopControl.Top = window.Allocation.Top;
+
+			GdkWin32.SetWindowLongPtr (OnTopHandle, (int)GWLParameter.GWL_HWNDPARENT, w4.Handle);
 		}
 
 		public override void SetGlobalProgressBar (double progress)

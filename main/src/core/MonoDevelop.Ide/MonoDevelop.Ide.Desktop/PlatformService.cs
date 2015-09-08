@@ -451,6 +451,11 @@ namespace MonoDevelop.Ide.Desktop
 		{
 		}
 
+		internal virtual void SMWD (Gtk.Window window)
+		{
+
+		}
+
 		internal virtual IMainToolbarView CreateMainToolbar (Gtk.Window window)
 		{
 			return new MainToolbar ();

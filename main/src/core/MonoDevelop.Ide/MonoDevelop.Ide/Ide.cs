@@ -264,6 +264,8 @@ namespace MonoDevelop.Ide
 			// The ide is now initialized
 
 			isInitialized = true;
+
+			DesktopService.SMWD (MessageService.RootWindow);
 			
 			if (isInitialRun) {
 				try {

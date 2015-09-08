@@ -55,8 +55,16 @@ namespace MonoDevelop.Platform
 		[DllImport (LIBGDK, CallingConvention = CallingConvention.Cdecl)]
 		static extern IntPtr gdk_win32_set_modal_dialog_libgtk_only (IntPtr window);
 
+		[DllImport (LIBGDK, CallingConvention = CallingConvention.Cdecl)]
+		static extern IntPtr gdk_win32_window_get_impl_hwnd (IntPtr window);
+
 		[DllImport (Win32.USER32, SetLastError=true, CharSet=CharSet.Auto)]
 		static extern uint RegisterWindowMessage (string lpString);
+
+		public static IntPtr WinGetHandle (Gdk.Window window)
+		{
+			return gdk_win32_window_get_impl_hwnd (window.Handle);
+		}
 
 		public static IntPtr HgdiobjGet (Gdk.Drawable drawable)
 		{
@@ -222,7 +230,7 @@ namespace MonoDevelop.Platform
 		[DllImport(Win32.USER32)]
 		static extern IntPtr CallWindowProc (IntPtr lpPrevWndFunc, IntPtr hWnd, uint Msg, IntPtr wParam, IntPtr lParam);
 
-		static IntPtr SetWindowLongPtr (IntPtr hWnd, int nIndex, IntPtr dwNewLong)
+		internal static IntPtr SetWindowLongPtr (IntPtr hWnd, int nIndex, IntPtr dwNewLong)
 		{
 			if (IntPtr.Size == 4)
 				return SetWindowLongPtr32 (hWnd, nIndex, dwNewLong);
