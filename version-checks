@@ -25,8 +25,8 @@ DEP[1]=heap-shot
 DEP_NAME[1]=HEAPSHOT
 DEP_PATH[1]=${top_srcdir}/../heap-shot
 DEP_MODULE[1]=git://github.com/mono/heap-shot.git
-DEP_NEEDED_VERSION[1]=56d80e0c3e710f13230603a8bf6b158c85979d48
-DEP_BRANCH_AND_REMOTE[1]="master origin/master"
+DEP_NEEDED_VERSION[1]=9b694a1a340d11752b6b27282a0d2b7dd85165c0
+DEP_BRANCH_AND_REMOTE[1]="android-use-install-target origin/android-use-install-target"
 
 # other dependencies
 # DEP[2]=...
