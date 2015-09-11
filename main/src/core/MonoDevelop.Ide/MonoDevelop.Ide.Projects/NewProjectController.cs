@@ -198,10 +198,7 @@ namespace MonoDevelop.Ide.Projects
 
 		bool GetDefaultCreateProjectDirectorySetting ()
 		{
-			if (IsNewSolution) {
-				return PropertyService.Get (CreateProjectSubDirectoryPropertyName, true);
-			}
-			return PropertyService.Get (CreateProjectSubDirectoryInExistingSolutionPropertyName, true);
+			return IsNewSolution && PropertyService.Get (CreateProjectSubDirectoryPropertyName, true);
 		}
 
 		void UpdateDefaultSettings ()
@@ -243,8 +240,6 @@ namespace MonoDevelop.Ide.Projects
 		{
 			if (IsNewSolution) {
 				PropertyService.Set (CreateProjectSubDirectoryPropertyName, projectConfiguration.CreateProjectDirectoryInsideSolutionDirectory);
-			} else {
-				PropertyService.Set (CreateProjectSubDirectoryInExistingSolutionPropertyName, projectConfiguration.CreateProjectDirectoryInsideSolutionDirectory);
 			}
 		}
 
@@ -277,6 +272,10 @@ namespace MonoDevelop.Ide.Projects
 		{
 			finalConfigurationPage = new FinalProjectConfigurationPage (projectConfiguration);
 			finalConfigurationPage.ParentFolder = ParentFolder;
+			if (!IsNewSolution) {
+				finalConfigurationPage.CreateProjectDirectoryInsideSolutionDirectory = true;
+				finalConfigurationPage.ShouldShowCreateProjectDirectoryCheckbox = false;
+			}
 			finalConfigurationPage.IsUseGitEnabled = IsNewSolution && (versionControlHandler != null);
 			finalConfigurationPage.IsValidChanged += (sender, e) => {
 				dialog.CanMoveToNextPage = finalConfigurationPage.IsValid;

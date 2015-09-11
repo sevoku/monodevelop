@@ -43,6 +43,7 @@ namespace MonoDevelop.Ide.Projects
 		public FinalProjectConfigurationPage (NewProjectConfiguration config)
 		{
 			this.config = config;
+			ShouldShowCreateProjectDirectoryCheckbox = true;
 		}
 
 		public SolutionFolder ParentFolder { get; set; }
@@ -181,6 +182,8 @@ namespace MonoDevelop.Ide.Projects
 				return "Solution";
 			}
 		}
+
+		public bool ShouldShowCreateProjectDirectoryCheckbox { get; set; }
 
 		public string DefaultPreviewSolutionFileName {
 			get {

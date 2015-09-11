@@ -202,8 +202,14 @@ namespace MonoDevelop.Ide.Projects
 
 			solutionNameTextBox.Sensitive = projectConfiguration.IsSolutionNameEnabled;
 			projectNameTextBox.Sensitive = projectConfiguration.IsProjectNameEnabled;
-			createProjectWithinSolutionDirectoryCheckBox.Sensitive = projectConfiguration.IsCreateProjectDirectoryInsideSolutionDirectoryEnabled;
-			createProjectWithinSolutionDirectoryCheckBox.Active = projectConfiguration.CreateProjectDirectoryInsideSolutionDirectory;
+
+			if (projectConfiguration.ShouldShowCreateProjectDirectoryCheckbox) {
+				createProjectWithinSolutionDirectoryCheckBox.Sensitive = projectConfiguration.IsCreateProjectDirectoryInsideSolutionDirectoryEnabled;
+				createProjectWithinSolutionDirectoryCheckBox.Active = projectConfiguration.CreateProjectDirectoryInsideSolutionDirectory;
+			} else {
+				RemoveWidget (createProjectWithinSolutionDirectoryCheckBox);
+			}
+
 			useGitCheckBox.Sensitive = projectConfiguration.IsUseGitEnabled;
 			useGitCheckBox.Active = projectConfiguration.UseGit;
 			createGitIgnoreFileCheckBox.Sensitive = projectConfiguration.IsGitIgnoreEnabled;
@@ -272,6 +278,14 @@ namespace MonoDevelop.Ide.Projects
 
 				projectConfigurationTable.NRows--;
 			}
+		}
+
+		void RemoveWidget (Widget widget)
+		{
+			var child = (Table.TableChild)projectConfigurationTable [widget];
+			projectConfigurationTable.SetRowSpacing (child.TopAttach, 0);
+			projectConfigurationTable.Remove (widget);
+			widget.Dispose ();
 		}
 
 		void AddExtraControlsSeparator ()
