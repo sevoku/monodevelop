@@ -274,7 +274,7 @@ namespace MonoDevelop.Ide.Projects
 			finalConfigurationPage.ParentFolder = ParentFolder;
 			if (!IsNewSolution) {
 				finalConfigurationPage.CreateProjectDirectoryInsideSolutionDirectory = true;
-				finalConfigurationPage.ShouldShowCreateProjectDirectoryCheckbox = false;
+				finalConfigurationPage.IsCreateProjectDirectoryInsideSolutionDirectoryVisible = false;
 			}
 			finalConfigurationPage.IsUseGitEnabled = IsNewSolution && (versionControlHandler != null);
 			finalConfigurationPage.IsValidChanged += (sender, e) => {

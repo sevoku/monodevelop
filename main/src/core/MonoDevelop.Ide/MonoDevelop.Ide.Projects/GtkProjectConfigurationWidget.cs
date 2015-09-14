@@ -203,7 +203,7 @@ namespace MonoDevelop.Ide.Projects
 			solutionNameTextBox.Sensitive = projectConfiguration.IsSolutionNameEnabled;
 			projectNameTextBox.Sensitive = projectConfiguration.IsProjectNameEnabled;
 
-			if (projectConfiguration.ShouldShowCreateProjectDirectoryCheckbox) {
+			if (projectConfiguration.IsCreateProjectDirectoryInsideSolutionDirectoryVisible) {
 				createProjectWithinSolutionDirectoryCheckBox.Sensitive = projectConfiguration.IsCreateProjectDirectoryInsideSolutionDirectoryEnabled;
 				createProjectWithinSolutionDirectoryCheckBox.Active = projectConfiguration.CreateProjectDirectoryInsideSolutionDirectory;
 			} else {
