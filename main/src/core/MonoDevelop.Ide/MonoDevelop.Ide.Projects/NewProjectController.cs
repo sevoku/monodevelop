@@ -272,10 +272,7 @@ namespace MonoDevelop.Ide.Projects
 		{
 			finalConfigurationPage = new FinalProjectConfigurationPage (projectConfiguration);
 			finalConfigurationPage.ParentFolder = ParentFolder;
-			if (!IsNewSolution) {
-				finalConfigurationPage.CreateProjectDirectoryInsideSolutionDirectory = true;
-				finalConfigurationPage.IsCreateProjectDirectoryInsideSolutionDirectoryVisible = false;
-			}
+			finalConfigurationPage.IsCreateProjectDirectoryInsideSolutionDirectoryVisible &= IsNewSolution;
 			finalConfigurationPage.IsUseGitEnabled = IsNewSolution && (versionControlHandler != null);
 			finalConfigurationPage.IsValidChanged += (sender, e) => {
 				dialog.CanMoveToNextPage = finalConfigurationPage.IsValid;
@@ -641,22 +638,8 @@ namespace MonoDevelop.Ide.Projects
 
 			ProcessedTemplateResult result = null;
 
-			try {
-				if (Directory.Exists (projectConfiguration.ProjectLocation)) {
-					var question = GettextCatalog.GetString ("Directory {0} already exists.\nDo you want to continue creating the project?", projectConfiguration.ProjectLocation);
-					var btn = MessageService.AskQuestion (question, AlertButton.No, AlertButton.Yes);
-					if (btn != AlertButton.Yes)
-						return false;
-				}
-
-				Directory.CreateDirectory (projectConfiguration.ProjectLocation);
-			} catch (IOException) {
-				MessageService.ShowError (GettextCatalog.GetString ("Could not create directory {0}. File already exists.", projectConfiguration.ProjectLocation));
+			if (!CreateProjectDirectory ())
 				return false;
-			} catch (UnauthorizedAccessException) {
-				MessageService.ShowError (GettextCatalog.GetString ("You do not have permission to create to {0}", projectConfiguration.ProjectLocation));
-				return false;
-			}
 
 			DisposeExistingNewItems ();
 
@@ -672,6 +655,29 @@ namespace MonoDevelop.Ide.Projects
 				return false;
 			}
 			processedTemplate = result;
+			return true;
+		}
+
+		bool CreateProjectDirectory ()
+		{
+			if (finalConfigurationPage.CreateProjectDirectoryInsideSolutionDirectory) {
+				try {
+					if (Directory.Exists (projectConfiguration.ProjectLocation)) {
+						var question = GettextCatalog.GetString ("Directory {0} already exists.\nDo you want to continue creating the project?", projectConfiguration.ProjectLocation);
+						var btn = MessageService.AskQuestion (question, AlertButton.No, AlertButton.Yes);
+						if (btn != AlertButton.Yes)
+							return false;
+					}
+
+					Directory.CreateDirectory (projectConfiguration.ProjectLocation);
+				} catch (IOException) {
+					MessageService.ShowError (GettextCatalog.GetString ("Could not create directory {0}. File already exists.", projectConfiguration.ProjectLocation));
+					return false;
+				} catch (UnauthorizedAccessException) {
+					MessageService.ShowError (GettextCatalog.GetString ("You do not have permission to create to {0}", projectConfiguration.ProjectLocation));
+					return false;
+				}
+			}
 			return true;
 		}
 

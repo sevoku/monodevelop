@@ -38,7 +38,7 @@ namespace MonoDevelop.Ide.Projects
 		NewProjectConfiguration config;
 		SolutionTemplate template;
 		bool valid;
-		bool projectNameIsReadOnly;
+		bool isProjectNameReadOnly;
 
 		public FinalProjectConfigurationPage (NewProjectConfiguration config)
 		{
@@ -153,7 +153,7 @@ namespace MonoDevelop.Ide.Projects
 		}
 
 		public bool IsProjectNameEnabled {
-			get { return HasProjects && !projectNameIsReadOnly; }
+			get { return HasProjects && !isProjectNameReadOnly; }
 		}
 
 		public bool IsSolutionNameEnabled {
@@ -231,7 +231,9 @@ namespace MonoDevelop.Ide.Projects
 		public void UpdateFromParameters ()
 		{
 			ProjectName = Parameters ["ProjectName"];
-			projectNameIsReadOnly = Parameters.GetBoolean ("IsProjectNameReadOnly", false);
+			isProjectNameReadOnly = Parameters.GetBoolean ("IsProjectNameReadOnly");
+			if (!IsNewSolution)
+				CreateProjectDirectoryInsideSolutionDirectory = Parameters.GetBoolean ("CreateProjectDirectory", true);
 		}
 	}
 }
