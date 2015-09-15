@@ -49,7 +49,10 @@ namespace MonoDevelop.Components.Windows
 		void SetWindowDecorations()
 		{
 			wpfWindow.ShowInTaskbar = false;
-			wpfWindow.WindowStyle = WindowStyle.ToolWindow;
+
+			int exStyle = (int)GtkWin32Interop.GetWindowLongPtr (wpfWindowPtr, (int)GtkWin32Interop.GWLParameter.GWL_EXSTYLE);
+			exStyle |= (int)GtkWin32Interop.ExtendedWindowStyles.WS_EX_TOOLWINDOW;
+			GtkWin32Interop.SetWindowLongPtr (wpfWindowPtr, (int)GtkWin32Interop.GWLParameter.GWL_EXSTYLE, (IntPtr)exStyle);
 		}
 
 		protected override void OnRealized ()
