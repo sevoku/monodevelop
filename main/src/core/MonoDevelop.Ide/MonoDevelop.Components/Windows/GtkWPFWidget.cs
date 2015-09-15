@@ -23,15 +23,61 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
+#if WIN32
 using System;
+using System.Windows;
 
 namespace Windows
 {
 	public class GtkWPFWidget : Gtk.Widget
 	{
-		public GtkWPFWidget ()
+		readonly IntPtr wpfWindowPtr;
+		readonly Window wpfWindow;
+
+		public GtkWPFWidget (Window WpfWindow)
 		{
+			wpfWindowPtr = new WindowInteropHelper (WpfWindow).Handle;
+			wpfWindow = WpfWindow;
+		}
+
+		protected override void OnRealized ()
+		{
+			base.OnRealized ();
+
+			IntPtr gtkWindowPtr = GtkWin32Interop.HWndGet (GdkWindow);
+			GtkWin32Interop.SetWindowLongPtr (wpfWindowPtr, (int)GtkWin32Interop.GWLParameter.GWL_HWNDPARENT, gtkWindowPtr);
+		}
+
+		protected override void OnSizeAllocated (Gdk.Rectangle allocation)
+		{
+			base.OnSizeAllocated (allocation);
+
+			wpfWindow.Left = allocation.Left;
+			wpfWindow.Top = allocation.Top;
+			wpfWindow.Width = allocation.Width;
+			wpfWindow.Height = allocation.Height;
+		}
+
+		protected override void OnDestroyed ()
+		{
+			base.OnDestroyed ();
+
+			wpfWindow.Close ();
+		}
+
+		protected override void OnShown ()
+		{
+			base.OnShown ();
+
+			wpfWindow.Show ();
+		}
+
+		protected override void OnHidden ()
+		{
+			base.OnHidden ();
+
+			wpfWindow.Hide ();
 		}
 	}
 }
-
+#endif
