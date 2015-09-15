@@ -47,26 +47,25 @@ namespace MonoDevelop.Components.Windows
 		IntPtr gtkWindowPtr;
 		protected override void OnRealized ()
 		{
-            WidgetFlags |= WidgetFlags.Realized;
-            WindowAttr attributes = new WindowAttr
-            {
-                WindowType = Gdk.WindowType.Child,
-                X = Allocation.X,
-                Y = Allocation.Y,
-                Width = Allocation.Width,
-                Height = Allocation.Height,
-                Wclass = WindowClass.InputOutput,
-                Visual = this.Visual,
-                Colormap = this.Colormap,
-                EventMask = (int)(this.Events | Gdk.EventMask.ExposureMask),
-                Mask = this.Events | Gdk.EventMask.ExposureMask
-            };
+			WidgetFlags |= WidgetFlags.Realized;
+			WindowAttr attributes = new WindowAttr {
+				WindowType = Gdk.WindowType.Child,
+				X = Allocation.X,
+				Y = Allocation.Y,
+				Width = Allocation.Width,
+				Height = Allocation.Height,
+				Wclass = WindowClass.InputOutput,
+				Visual = Visual,
+				Colormap = Colormap,
+				EventMask = (int)(Events | Gdk.EventMask.ExposureMask),
+				Mask = Events | Gdk.EventMask.ExposureMask
+			};
 
-            WindowAttributesType mask = WindowAttributesType.X | WindowAttributesType.Y | WindowAttributesType.Colormap | WindowAttributesType.Visual;
-            GdkWindow = new Gdk.Window(ParentWindow, attributes, mask);
-            GdkWindow.UserData = Raw;
-            GdkWindow.Background = Style.Background(StateType.Normal);
-            Style = Style.Attach(GdkWindow);
+			WindowAttributesType mask = WindowAttributesType.X | WindowAttributesType.Y | WindowAttributesType.Colormap | WindowAttributesType.Visual;
+			GdkWindow = new Gdk.Window (ParentWindow, attributes, mask);
+			GdkWindow.UserData = Raw;
+			GdkWindow.Background = Style.Background (StateType.Normal);
+			Style = Style.Attach(GdkWindow);
 
 			gtkWindowPtr = GtkWin32Interop.HWndGet (GdkWindow);
 			GtkWin32Interop.SetWindowLongPtr (wpfWindowPtr, (int)GtkWin32Interop.GWLParameter.GWL_HWNDPARENT, gtkWindowPtr);
