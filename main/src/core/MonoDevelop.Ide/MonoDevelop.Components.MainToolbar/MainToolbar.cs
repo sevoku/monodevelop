@@ -177,7 +177,7 @@ namespace MonoDevelop.Components.MainToolbar
 			widget.WidthRequest = 200;
 			widget.HeightRequest = 20;
 			AddSpace (24);
-			Add (widget);
+			AddWidget (widget);
 
 			statusArea = new StatusArea ();
 			statusArea.ShowMessage (BrandingService.ApplicationName);
