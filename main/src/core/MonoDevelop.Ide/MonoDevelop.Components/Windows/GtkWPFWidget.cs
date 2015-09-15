@@ -28,15 +28,17 @@
 using System;
 using System.Windows;
 using System.Windows.Interop;
+using Gtk;
+using Gdk;
 
 namespace MonoDevelop.Components.Windows
 {
 	public class GtkWPFWidget : Gtk.Widget
 	{
 		readonly IntPtr wpfWindowPtr;
-		readonly Window wpfWindow;
+		readonly System.Windows.Window wpfWindow;
 
-		public GtkWPFWidget (Window wpfWindow)
+		public GtkWPFWidget (System.Windows.Window wpfWindow)
 		{
 			wpfWindowPtr = new WindowInteropHelper (wpfWindow).Handle;
 			this.wpfWindow = wpfWindow;
@@ -45,7 +47,26 @@ namespace MonoDevelop.Components.Windows
 		IntPtr gtkWindowPtr;
 		protected override void OnRealized ()
 		{
-			base.OnRealized ();
+            WidgetFlags |= WidgetFlags.Realized;
+            WindowAttr attributes = new WindowAttr
+            {
+                WindowType = Gdk.WindowType.Child,
+                X = Allocation.X,
+                Y = Allocation.Y,
+                Width = Allocation.Width,
+                Height = Allocation.Height,
+                Wclass = WindowClass.InputOutput,
+                Visual = this.Visual,
+                Colormap = this.Colormap,
+                EventMask = (int)(this.Events | Gdk.EventMask.ExposureMask),
+                Mask = this.Events | Gdk.EventMask.ExposureMask
+            };
+
+            WindowAttributesType mask = WindowAttributesType.X | WindowAttributesType.Y | WindowAttributesType.Colormap | WindowAttributesType.Visual;
+            GdkWindow = new Gdk.Window(ParentWindow, attributes, mask);
+            GdkWindow.UserData = Raw;
+            GdkWindow.Background = Style.Background(StateType.Normal);
+            Style = Style.Attach(GdkWindow);
 
 			gtkWindowPtr = GtkWin32Interop.HWndGet (GdkWindow);
 			GtkWin32Interop.SetWindowLongPtr (wpfWindowPtr, (int)GtkWin32Interop.GWLParameter.GWL_HWNDPARENT, gtkWindowPtr);
