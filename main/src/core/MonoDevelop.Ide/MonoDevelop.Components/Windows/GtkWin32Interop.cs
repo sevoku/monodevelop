@@ -27,7 +27,7 @@
 using System;
 using System.Runtime.InteropServices;
 
-namespace Windows
+namespace MonoDevelop.Components.Windows
 {
 	public static class GtkWin32Interop
 	{

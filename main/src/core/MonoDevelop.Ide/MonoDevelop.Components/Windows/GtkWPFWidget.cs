@@ -29,7 +29,7 @@ using System;
 using System.Windows;
 using System.Windows.Interop;
 
-namespace Windows
+namespace MonoDevelop.Components.Windows
 {
 	public class GtkWPFWidget : Gtk.Widget
 	{
