@@ -25,6 +25,7 @@
     <DefineConstants>DEBUG</DefineConstants>
     <NoWarn>1591;1573</NoWarn>
     <DocumentationFile>..\..\..\build\bin\MonoDevelop.Ide.xml</DocumentationFile>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -39,6 +40,7 @@
     <DebugSymbols>true</DebugSymbols>
     <NoWarn>1591;1573</NoWarn>
     <DocumentationFile>..\..\..\build\AddIns\MonoDevelop.Ide.xml</DocumentationFile>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'DebugMac|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -54,6 +56,7 @@
       <Execution clr-version="Net_2_0" />
     </Execution>
     <NoWarn>1591;1573</NoWarn>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'ReleaseMac|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -68,6 +71,33 @@
     <Execution>
       <Execution clr-version="Net_2_0" />
     </Execution>
+    <NoWarn>1591;1573</NoWarn>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'DebugWin32|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>..\..\..\build\bin</OutputPath>
+    <DefineConstants>DEBUG,WIN32</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>3</WarningLevel>
+    <DocumentationFile>..\..\..\build\bin\MonoDevelop.Ide.xml</DocumentationFile>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <NoWarn>1591;1573</NoWarn>
+    <Execution>
+      <Execution clr-version="Net_2_0" />
+    </Execution>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'ReleaseWin32|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>..\..\..\build\bin</OutputPath>
+    <DefineConstants>WIN32</DefineConstants>
+    <WarningLevel>4</WarningLevel>
+    <DocumentationFile>..\..\..\build\AddIns\MonoDevelop.Ide.xml</DocumentationFile>
     <NoWarn>1591;1573</NoWarn>
   </PropertyGroup>
   <ItemGroup>
@@ -3379,6 +3409,7 @@
     <Compile Include="MonoDevelop.Components.AutoTest\PropertyMetadata.cs" />
     <Compile Include="MonoDevelop.Components.AutoTest\ObjectProperties.cs" />
     <Compile Include="MonoDevelop.Components.AutoTest.Operations\SelectedOperation.cs" />
+    <Compile Include="MonoDevelop.Components\Windows\GtkWPFWidget.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Makefile.am" />
@@ -3423,6 +3454,7 @@
     <Folder Include="MonoDevelop.Ide.TextEditing\" />
     <Folder Include="MonoDevelop.Components.DockNotebook\" />
     <Folder Include="icons\mac\" />
+    <Folder Include="MonoDevelop.Components\Windows\" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="gtkrc.win32">
