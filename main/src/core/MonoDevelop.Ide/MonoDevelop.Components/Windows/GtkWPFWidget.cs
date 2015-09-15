@@ -23,9 +23,11 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
+
 #if WIN32
 using System;
 using System.Windows;
+using System.Windows.Interop;
 
 namespace Windows
 {
@@ -34,10 +36,10 @@ namespace Windows
 		readonly IntPtr wpfWindowPtr;
 		readonly Window wpfWindow;
 
-		public GtkWPFWidget (Window WpfWindow)
+		public GtkWPFWidget (Window wpfWindow)
 		{
-			wpfWindowPtr = new WindowInteropHelper (WpfWindow).Handle;
-			wpfWindow = WpfWindow;
+			wpfWindowPtr = new WindowInteropHelper (wpfWindow).Handle;
+			this.wpfWindow = wpfWindow;
 		}
 
 		protected override void OnRealized ()
