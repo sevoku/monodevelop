@@ -41,6 +41,7 @@ namespace MonoDevelop.Components.Windows
 		public GtkWPFWidget (System.Windows.Window wpfWindow)
 		{
 			wpfWindowPtr = new WindowInteropHelper (wpfWindow).Handle;
+			wpfWindow.ShowInTaskbar = false;
 			this.wpfWindow = wpfWindow;
 		}
 
