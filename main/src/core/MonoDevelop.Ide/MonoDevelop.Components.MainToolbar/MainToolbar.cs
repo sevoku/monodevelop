@@ -173,6 +173,12 @@ namespace MonoDevelop.Components.MainToolbar
 			AddWidget (buttonBarBox);
 			AddSpace (24);
 
+			var widget = new MonoDevelop.Components.Windows.GtkWPFWidget (new WindowsPlatform.HoverControl ());
+			widget.WidthRequest = 200;
+			widget.HeightRequest = 20;
+			AddSpace (24);
+			Add (widget);
+
 			statusArea = new StatusArea ();
 			statusArea.ShowMessage (BrandingService.ApplicationName);
 
