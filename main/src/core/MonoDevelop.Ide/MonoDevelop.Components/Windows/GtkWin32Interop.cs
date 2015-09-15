@@ -34,6 +34,12 @@ namespace MonoDevelop.Components.Windows
 		internal const string LIBGDK = "libgdk-win32-2.0-0.dll";
 		internal const string USER32 = "user32.dll";
 
+		public enum ExtendedWindowStyles
+		{
+			// Hides it from alt-tab.
+			WS_EX_TOOLWINDOW = 0x80,
+		}
+
 		public enum GWLParameter
 		{
 			// Sets a new extended style.
@@ -77,6 +83,19 @@ namespace MonoDevelop.Components.Windows
 			if (IntPtr.Size == 4)
 				return SetWindowLongPtr32 (hWnd, nIndex, dwNewLong);
 			return SetWindowLongPtr64 (hWnd, nIndex, dwNewLong);
+		}
+
+		[DllImport (USER32, EntryPoint="GetWindowLongPtr")]
+		static extern IntPtr GetWindowLongPtr64 (IntPtr hWnd, int nIndex);
+
+		[DllImport(USER32, EntryPoint="GetWindowLong")]
+		static extern IntPtr GetWindowLongPtr32 (IntPtr hWnd, int nIndex);
+
+		public static IntPtr GetWindowLongPtr (IntPtr hWnd, int nIndex)
+		{
+			if (IntPtr.Size == 4)
+				return GetWindowLongPtr32 (hWnd, nIndex);
+			return GetWindowLongPtr64 (hWnd, nIndex);
 		}
 	}
 }

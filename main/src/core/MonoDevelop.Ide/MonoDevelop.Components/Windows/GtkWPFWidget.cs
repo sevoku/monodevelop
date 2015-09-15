@@ -41,8 +41,18 @@ namespace MonoDevelop.Components.Windows
 		public GtkWPFWidget (System.Windows.Window wpfWindow)
 		{
 			wpfWindowPtr = new WindowInteropHelper (wpfWindow).Handle;
-			wpfWindow.ShowInTaskbar = false;
 			this.wpfWindow = wpfWindow;
+
+			SetWindowDecorations ();
+		}
+
+		void SetWindowDecorations()
+		{
+			wpfWindow.ShowInTaskbar = false;
+
+			int exStyle = (int)GtkWin32Interop.GetWindowLongPtr (wpfWindowPtr, (int)GtkWin32Interop.GWLParameter.GWL_EXSTYLE);
+			exStyle |= (int)GtkWin32Interop.ExtendedWindowStyles.WS_EX_TOOLWINDOW;
+			GtkWin32Interop.SetWindowLongPtr (wpfWindowPtr, (int)GtkWin32Interop.GWLParameter.GWL_EXSTYLE, (IntPtr)exStyle);
 		}
 
 		protected override void OnRealized ()
