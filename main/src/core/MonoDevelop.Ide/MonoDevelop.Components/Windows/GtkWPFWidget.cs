@@ -42,11 +42,12 @@ namespace MonoDevelop.Components.Windows
 			this.wpfWindow = wpfWindow;
 		}
 
+		IntPtr gtkWindowPtr;
 		protected override void OnRealized ()
 		{
 			base.OnRealized ();
 
-			IntPtr gtkWindowPtr = GtkWin32Interop.HWndGet (GdkWindow);
+			gtkWindowPtr = GtkWin32Interop.HWndGet (GdkWindow);
 			GtkWin32Interop.SetWindowLongPtr (wpfWindowPtr, (int)GtkWin32Interop.GWLParameter.GWL_HWNDPARENT, gtkWindowPtr);
 		}
 
@@ -71,7 +72,8 @@ namespace MonoDevelop.Components.Windows
 		{
 			base.OnShown ();
 
-			wpfWindow.Show ();
+			if (gtkWindowPtr != IntPtr.Zero)
+				wpfWindow.Show ();
 		}
 
 		protected override void OnHidden ()
