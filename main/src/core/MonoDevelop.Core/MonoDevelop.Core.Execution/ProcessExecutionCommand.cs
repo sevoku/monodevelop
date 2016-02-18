@@ -74,11 +74,21 @@ namespace MonoDevelop.Core.Execution
 			get {
 				if (environmentVariables == null)
 					environmentVariables = new Dictionary<string, string> ();
-				return environmentVariables;
+
+				return WithDefaultEnvironment (environmentVariables);
 			}
 			set {
 				environmentVariables = value;
 			}
+		}
+
+		static IDictionary<string, string> WithDefaultEnvironment (IDictionary<string, string> environmentVariables)
+		{
+			var withDefaults = new Dictionary<string, string> (environmentVariables);
+			foreach (var defaultEnvVar in Core.Execution.ProcessService.EnvironmentVariableDefaults)
+				if (defaultEnvVar.Value != null && !withDefaults.ContainsKey (defaultEnvVar.Key))
+					withDefaults [defaultEnvVar.Key] = defaultEnvVar.Value;
+			return withDefaults;
 		}
 	}
 }

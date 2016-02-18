@@ -55,12 +55,19 @@ namespace MonoDevelop.Core.Execution
 		const string ExecutionModesExtensionPath = "/MonoDevelop/Core/ExecutionModes";
 
 		Dictionary<string, string> environmentVariableOverrides = null;
+		static Dictionary<string, string> environmentVariableDefaults = new Dictionary<string,string> ();
 		
 		public IDictionary<string, string> EnvironmentVariableOverrides {
 			get {
 				if (environmentVariableOverrides == null)
 					environmentVariableOverrides = new Dictionary<string,string> ();
 				return environmentVariableOverrides;
+			}
+		}
+
+		public static IDictionary<string, string> EnvironmentVariableDefaults {
+			get {
+				return environmentVariableDefaults;
 			}
 		}
 		

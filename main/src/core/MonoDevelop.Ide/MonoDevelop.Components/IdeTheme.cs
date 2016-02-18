@@ -51,6 +51,11 @@ namespace MonoDevelop.Components
 		{
 			DefaultGtkDataFolder = Environment.GetEnvironmentVariable ("GTK_DATA_PREFIX");
 			DefaultGtk2RcFiles = Environment.GetEnvironmentVariable ("GTK2_RC_FILES");
+
+			// Reset the Gtk environment when starting new processes
+			Core.Execution.ProcessService.EnvironmentVariableDefaults ["GTK_DATA_PREFIX"] = DefaultGtkDataFolder;
+			Core.Execution.ProcessService.EnvironmentVariableDefaults ["GTK2_RC_FILES"] = DefaultGtk2RcFiles;
+
 			// FIXME: Immediate theme switching disabled, until:
 			//        MAC: NSAppearance issues are fixed
 			//        WIN: spradic Gtk crashes on theme realoding are fixed
