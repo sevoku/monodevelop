@@ -232,6 +232,8 @@
 		                class = "MonoDevelop.Ide.Gui.DefaultDisplayBinding"/>
 		<DisplayBinding id = "TextEditor"
 						class = "MonoDevelop.Ide.Editor.TextEditorDisplayBinding" />
+		<DisplayBinding id = "WebView"
+						class = "MonoDevelop.Ide.WebBrowser.WebViewDisplayBinding" />
 	</Extension>
 
 	<Extension path = "/MonoDevelop/Ide/StartupHandlers">

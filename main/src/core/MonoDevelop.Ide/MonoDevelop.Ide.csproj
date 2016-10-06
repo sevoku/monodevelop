@@ -8332,6 +8332,9 @@
     <Compile Include="MonoDevelop.Ide.WebBrowser\LoadingProgressChangedEventArgs.cs" />
     <Compile Include="MonoDevelop.Ide.WebBrowser\LocationChangingEventArgs.cs" />
     <Compile Include="MonoDevelop.Ide.WebBrowser\IWebBrowserLoader.cs" />
+    <Compile Include="MonoDevelop.Ide.WebBrowser\WebBrowser.cs" />
+    <Compile Include="MonoDevelop.Ide.WebBrowser\WebViewContent.cs" />
+    <Compile Include="MonoDevelop.Ide.WebBrowser\WebViewDisplayBinding.cs" />
     <Compile Include="MonoDevelop.Ide.CodeCompletion\CompletionListWindow.cs" />
     <Compile Include="MonoDevelop.Ide.CodeCompletion\ICompletionWidget.cs" />
     <Compile Include="MonoDevelop.Ide.CodeCompletion\ListWindow.cs" />
