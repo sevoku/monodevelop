@@ -489,7 +489,7 @@ namespace MonoDevelop.WebReferences.Dialogs
 				btnConfig.Sensitive = isWebService && hasConfig;
 				btnOK.Visible = true;
 				btnOK.Sensitive = isWebService;
-				tlbNavigate.Visible = WebBrowserService.CanGetWebBrowser;
+				tlbNavigate.Visible = true;
 				tbxReferenceName.Sensitive = isWebService;
 				comboModel.Sensitive = !project.IsPortableLibrary;
 				break;
@@ -511,7 +511,7 @@ namespace MonoDevelop.WebReferences.Dialogs
 				btnConfig.Sensitive = isWebService && hasConfig;
 				btnOK.Visible = true;
 				btnOK.Sensitive = isWebService;
-				tlbNavigate.Visible = WebBrowserService.CanGetWebBrowser;
+				tlbNavigate.Visible = true;
 				tbxReferenceName.Sensitive = false;
 				comboModel.Sensitive = false;
 				break;
@@ -553,27 +553,19 @@ namespace MonoDevelop.WebReferences.Dialogs
 			case DialogState.Modify:
 				if (WebBrowserService.CanGetWebBrowser) {
 					browser = WebBrowserService.GetWebBrowser ();
-					browserWidget = (Widget) browser;
-					browser.LocationChanged += Browser_LocationChanged;
-					browser.NetStart += Browser_StartLoading;
-					browser.NetStop += Browser_StopLoading;
-					frmBrowser.Add (browserWidget);
-					browser.LoadUrl (tbxReferenceURL.Text);
-					browserWidget.Show ();
+					browserWidget = (Widget)browser;
 				} else {
-					docLabel = new Label ();
-					docLabel.Xpad = 6;
-					docLabel.Ypad = 6;
-					docLabel.Xalign = 0;
-					docLabel.Yalign = 0;
-
-					sw = new ScrolledWindow ();
-					sw.ShadowType = ShadowType.In;
-					sw.AddWithViewport (docLabel);
-					sw.ShowAll ();
-					frmBrowser.Add (sw);
-					UpdateLocation ();
+					var defaultBrowser = new WebBrowser ();
+					browser = defaultBrowser;
+					browserWidget = defaultBrowser.Control;
 				}
+				browser.LocationChanged += Browser_LocationChanged;
+				browser.NetStart += Browser_StartLoading;
+				browser.NetStop += Browser_StopLoading;
+				frmBrowser.Add (browserWidget);
+				browser.LoadUrl (tbxReferenceURL.Text);
+				browserWidget.Show ();
+
 				break;
 
 			case DialogState.ModifyConfig:
